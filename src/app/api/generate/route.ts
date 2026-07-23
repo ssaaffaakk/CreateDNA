@@ -3,16 +3,26 @@ import { generateText } from "@/lib/granite";
 import type { StyleDNA } from "@/lib/style-dna";
 import type { ProjectBrief } from "@/lib/store";
 import { toClientError } from "@/lib/api-error";
+import { tooLarge, clampStrings } from "@/lib/request-guard";
+
+const MAX_BODY_BYTES = 512 * 1024;
+const MAX_DNA_STRING = 500;
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { styleDNA, brief } = body as {
-      styleDNA: StyleDNA;
-      brief: ProjectBrief;
-    };
+    const oversized = tooLarge(req, MAX_BODY_BYTES);
+    if (oversized) return oversized;
 
-    if (!styleDNA || !brief?.description) {
+    const body = await req.json();
+    const payload = body as { styleDNA: StyleDNA; brief: ProjectBrief };
+
+    // Every styleDNA string is interpolated into the system prompt. The brief
+    // is length-checked below, so without this a caller could move an
+    // arbitrary prompt into styleDNA.summary and bypass that cap entirely.
+    const styleDNA = clampStrings(payload.styleDNA, MAX_DNA_STRING);
+    const brief = payload.brief;
+
+    if (!styleDNA || typeof brief?.description !== "string" || !brief.description) {
       return NextResponse.json(
         { error: "Missing styleDNA or brief description" },
         { status: 400 }

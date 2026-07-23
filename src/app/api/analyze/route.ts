@@ -3,20 +3,27 @@ import { analyzeImage } from "@/lib/granite";
 import { ANALYSIS_PROMPT, mergeStyleDNA } from "@/lib/style-dna";
 import type { StyleDNA } from "@/lib/style-dna";
 import { toClientError } from "@/lib/api-error";
+import { tooLarge } from "@/lib/request-guard";
+
+const MAX_BASE64_SIZE = 15 * 1024 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    const oversized = tooLarge(req, MAX_BASE64_SIZE + 1024 * 1024);
+    if (oversized) return oversized;
+
     const body = await req.json();
     const { imageBase64, existingDNA } = body as {
       imageBase64: string;
       existingDNA: StyleDNA | null;
     };
 
-    if (!imageBase64) {
+    // Type check, not just truthiness: a non-string here would otherwise skip
+    // the length guard and reach the paid vision call as "[object Object]".
+    if (typeof imageBase64 !== "string" || !imageBase64) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
-    const MAX_BASE64_SIZE = 15 * 1024 * 1024;
     if (imageBase64.length > MAX_BASE64_SIZE) {
       return NextResponse.json({ error: "Image too large (max ~10MB)" }, { status: 400 });
     }

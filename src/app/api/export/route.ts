@@ -1,16 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { StyleDNA } from "@/lib/style-dna";
+import { toClientError } from "@/lib/api-error";
+import { tooLarge } from "@/lib/request-guard";
+
+const MAX_BODY_BYTES = 512 * 1024;
 
 export async function POST(req: NextRequest) {
   try {
+    const oversized = tooLarge(req, MAX_BODY_BYTES);
+    if (oversized) return oversized;
+
     const body = await req.json();
     const { styleDNA, format } = body as {
       styleDNA: StyleDNA;
       format: "json" | "markdown" | "system-prompt";
     };
 
-    if (!styleDNA) {
-      return NextResponse.json({ error: "No styleDNA" }, { status: 400 });
+    // The formatters map over these arrays; a malformed DNA previously threw
+    // and leaked the raw TypeError to the client as a 500.
+    const isUsableDNA =
+      styleDNA !== null &&
+      typeof styleDNA === "object" &&
+      (["palette", "composition", "styles", "mood", "techniques", "influences"] as const).every(
+        (k) => Array.isArray((styleDNA as unknown as Record<string, unknown>)[k])
+      );
+
+    if (!isUsableDNA) {
+      return NextResponse.json(
+        { error: "Invalid or incomplete styleDNA" },
+        { status: 400 }
+      );
     }
 
     switch (format) {
@@ -27,8 +46,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Invalid format" }, { status: 400 });
     }
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(...toClientError(error, "Export failed"));
   }
 }
 
