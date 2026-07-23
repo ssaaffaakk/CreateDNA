@@ -49,8 +49,8 @@ export default function OutputPanel() {
       a.download = `creative-dna.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Export failed:", err);
+    } catch {
+      useAppStore.getState().setError("Export failed. Please try again.");
     }
     setExporting(null);
   };

@@ -54,7 +54,6 @@ export function mergeStyleDNA(
   newAnalysis: Omit<StyleDNA, "id" | "createdAt" | "updatedAt" | "imageCount" | "consistencyScore">
 ): StyleDNA {
   if (!existing) {
-    const styles = newAnalysis.styles;
     return {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
