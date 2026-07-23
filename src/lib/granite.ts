@@ -1,4 +1,9 @@
-import OpenAI from "openai";
+// watsonx.ai model IDs. Granite 4.1 chat/vision models are not offered on the
+// Lite plan, so we use the closest available equivalents:
+//   - Text: IBM Granite 4-h-small (native IBM Granite instruct model)
+//   - Vision: Llama 4 Maverick (multimodal; Granite Vision is plan-gated)
+const TEXT_MODEL = "ibm/granite-4-h-small";
+const VISION_MODEL = "meta-llama/llama-4-maverick-17b-128e-instruct-fp8";
 
 function assertEnv(key: string): string {
   const val = process.env[key];
@@ -34,32 +39,55 @@ async function getToken(): Promise<string> {
   return cachedToken;
 }
 
-function makeClient(token: string): OpenAI {
+interface ChatMessage {
+  role: string;
+  content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
+}
+
+async function chatCompletion(
+  modelId: string,
+  messages: ChatMessage[],
+  maxTokens: number,
+  temperature: number
+): Promise<string> {
+  const token = await getToken();
   const baseUrl = assertEnv("WATSONX_URL");
   const projectId = assertEnv("WATSONX_PROJECT_ID");
-  return new OpenAI({
-    baseURL: `${baseUrl}/ml/v1/text`,
-    apiKey: token,
-    defaultQuery: {
-      version: "2025-03-01",
-      project_id: projectId,
-    },
-    defaultHeaders: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+
+  const res = await fetch(
+    `${baseUrl}/ml/v1/text/chat?version=2025-03-01`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model_id: modelId,
+        project_id: projectId,
+        messages,
+        max_tokens: maxTokens,
+        temperature,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`watsonx API error (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
 }
 
 export async function analyzeImage(
   imageBase64: string,
   prompt: string
 ): Promise<string> {
-  const token = await getToken();
-  const client = makeClient(token);
-
-  const response = await client.chat.completions.create({
-    model: "ibm/granite-vision-4-1-4b",
-    messages: [
+  return chatCompletion(
+    VISION_MODEL,
+    [
       {
         role: "user",
         content: [
@@ -71,29 +99,22 @@ export async function analyzeImage(
         ],
       },
     ],
-    max_tokens: 2000,
-    temperature: 0.1,
-  });
-
-  return response.choices[0]?.message?.content ?? "";
+    2000,
+    0.1
+  );
 }
 
 export async function generateText(
   systemPrompt: string,
   userPrompt: string
 ): Promise<string> {
-  const token = await getToken();
-  const client = makeClient(token);
-
-  const response = await client.chat.completions.create({
-    model: "ibm/granite-4-1-8b-instruct",
-    messages: [
+  return chatCompletion(
+    TEXT_MODEL,
+    [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt },
     ],
-    max_tokens: 2000,
-    temperature: 0.7,
-  });
-
-  return response.choices[0]?.message?.content ?? "";
+    2000,
+    0.7
+  );
 }
