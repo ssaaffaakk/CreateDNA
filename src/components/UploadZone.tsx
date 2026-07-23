@@ -148,7 +148,9 @@ export default function UploadZone() {
           }
         }}
       >
-        <AnimatePresence mode="wait">
+        {/* initial={false}: the drop target must read instantly on first paint;
+            the idle <-> analyzing swap still animates. */}
+        <AnimatePresence initial={false} mode="wait">
           {isAnalyzing ? (
             <motion.div
               key="analyzing"

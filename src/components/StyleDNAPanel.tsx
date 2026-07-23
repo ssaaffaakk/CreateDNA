@@ -61,7 +61,7 @@ export default function StyleDNAPanel() {
               <div className="flex items-center gap-1.5 mt-0.5">
                 <div className="w-16 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                   <motion.div
-                    initial={{ width: 0 }}
+                    initial={false}
                     animate={{ width: `${styleDNA.consistencyScore}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
                     className="h-full rounded-full"
@@ -151,7 +151,7 @@ export default function StyleDNAPanel() {
               className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3"
             >
               <div className="flex items-baseline justify-between gap-2 sm:contents">
-                <span className="text-[13px] sm:text-sm sm:w-32 sm:text-right text-zinc-600 dark:text-zinc-400 capitalize sm:truncate">
+                <span className="text-[13px] sm:text-sm sm:w-44 sm:text-right text-zinc-600 dark:text-zinc-400 capitalize">
                   {style.name}
                 </span>
                 <span className="text-xs text-zinc-500 font-mono tabular-nums sm:order-last sm:w-10 sm:text-right shrink-0">
@@ -160,7 +160,10 @@ export default function StyleDNAPanel() {
               </div>
               <div className="flex-1 h-2 sm:h-2.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <motion.div
-                  initial={{ width: 0 }}
+                  // A bar that starts at 0 shows the WRONG value if the fill
+                  // animation never runs — render it at its real width and let
+                  // later changes animate.
+                  initial={false}
                   animate={{ width: `${style.weight * 100}%` }}
                   transition={{ duration: 0.8, delay: i * 0.1, ease: "easeOut" }}
                   className="h-full rounded-full"
