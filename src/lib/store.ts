@@ -86,9 +86,8 @@ const asString = (v: unknown, fallback = ""): string =>
   typeof v === "string" ? v : fallback;
 
 // Structural fields the UI maps/slices over are strict — a wrong type discards
-// the whole profile rather than deep-repairing it. consistencyScore is always
-// recomputed because its meaning changed between versions (hardcoded 100 ->
-// entropy of style weights), so a persisted number cannot be trusted.
+// the whole profile rather than deep-repairing it. Leaf display strings are
+// coerced.
 function sanitizeStyleDNA(value: unknown): StyleDNA | null {
   if (!isRecord(value)) return null;
 
@@ -136,7 +135,16 @@ function sanitizeStyleDNA(value: unknown): StyleDNA | null {
     techniques,
     influences,
     summary: asString(value.summary),
-    consistencyScore: calculateConsistency(cleanStyles),
+    // Recompute only when the stored value is missing or out of range — a
+    // pre-score profile used to render "undefined%". Recomputing a valid
+    // score would silently rewrite profiles the user has already seen.
+    consistencyScore:
+      typeof value.consistencyScore === "number" &&
+      Number.isFinite(value.consistencyScore) &&
+      value.consistencyScore >= 0 &&
+      value.consistencyScore <= 100
+        ? value.consistencyScore
+        : calculateConsistency(cleanStyles),
   };
 }
 

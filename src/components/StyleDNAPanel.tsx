@@ -144,11 +144,21 @@ export default function StyleDNAPanel() {
         </h3>
         <div className="space-y-2">
           {styleDNA.styles.map((style, i) => (
-            <div key={style.name} className="flex items-center gap-3">
-              <span className="text-sm w-32 text-right text-zinc-600 dark:text-zinc-400 truncate capitalize">
-                {style.name}
-              </span>
-              <div className="flex-1 h-2.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+            // Stacked on phones so long movement names are never truncated;
+            // side-by-side from sm up where there is room for both.
+            <div
+              key={style.name}
+              className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3"
+            >
+              <div className="flex items-baseline justify-between gap-2 sm:contents">
+                <span className="text-[13px] sm:text-sm sm:w-32 sm:text-right text-zinc-600 dark:text-zinc-400 capitalize sm:truncate">
+                  {style.name}
+                </span>
+                <span className="text-xs text-zinc-500 font-mono tabular-nums sm:order-last sm:w-10 sm:text-right shrink-0">
+                  {Math.round(style.weight * 100)}%
+                </span>
+              </div>
+              <div className="flex-1 h-2 sm:h-2.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${style.weight * 100}%` }}
@@ -159,9 +169,6 @@ export default function StyleDNAPanel() {
                   }}
                 />
               </div>
-              <span className="text-xs text-zinc-500 w-10 font-mono text-right">
-                {Math.round(style.weight * 100)}%
-              </span>
             </div>
           ))}
         </div>
