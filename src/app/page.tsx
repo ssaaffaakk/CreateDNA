@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import UploadZone from "@/components/UploadZone";
 import StyleDNAPanel from "@/components/StyleDNAPanel";
 import ProjectBriefForm from "@/components/ProjectBriefForm";
@@ -19,6 +19,9 @@ export default function Home() {
   const step = !styleDNA ? 0 : !generatedOutput ? 1 : 2;
 
   return (
+    // The globals.css reduced-motion rule only covers CSS animations; Framer
+    // Motion runs in JS and needs to be told to honour the preference too.
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
         <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -150,5 +153,6 @@ export default function Home() {
         </footer>
       </main>
     </div>
+    </MotionConfig>
   );
 }
