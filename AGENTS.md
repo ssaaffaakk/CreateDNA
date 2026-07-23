@@ -30,21 +30,23 @@ Users upload portfolio images → IBM Granite Vision 4.1-4b extracts a "Creative
 ```
 src/
   app/
-    page.tsx             # Single-page UI — four panels wired together
-    layout.tsx           # Root layout, metadata
+    page.tsx             # Single-page UI — four panels with AnimatePresence transitions
+    layout.tsx           # Root layout, metadata, OpenGraph
+    globals.css          # Tailwind v4 directives, accent colors, reduced-motion support
     api/
       analyze/route.ts   # POST /api/analyze — Granite Vision + mergeStyleDNA
       generate/route.ts  # POST /api/generate — Granite text → project kit
       export/route.ts    # POST /api/export   — JSON / Markdown / system-prompt
   components/
-    UploadZone.tsx        # Drag-drop + click upload, base64 → API → store
-    StyleDNAPanel.tsx     # Visual display of merged StyleDNA profile
-    ProjectBriefForm.tsx  # Brief input → /api/generate
-    OutputPanel.tsx       # Project kit display + export buttons
+    UploadZone.tsx        # Drag-drop + click upload, validation, retry, thumbnails
+    StyleDNAPanel.tsx     # Visual display of merged StyleDNA with animated tags/bars
+    ProjectBriefForm.tsx  # Brief input → /api/generate, retry on failure
+    OutputPanel.tsx       # Project kit display + copy buttons + export downloads
   lib/
     granite.ts            # IAM token cache + OpenAI-compat client for watsonx
     store.ts              # Zustand store (StyleDNA, images, project, output)
     style-dna.ts          # StyleDNA types, ANALYSIS_PROMPT, mergeStyleDNA logic
+    mock-data.ts          # Demo mode sample data for judges without API keys
 ```
 
 ## Environment variables
@@ -84,7 +86,23 @@ git add . && git commit -m "feat: <what changed>" && git push origin main
 
 Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`.
 
-## Known bugs / gotchas
+## Features implemented
+
+- Upload with drag-drop, file type/size validation, retry on failure
+- Granite Vision analysis with JSON parsing and error recovery
+- Weighted DNA merge algorithm with color proximity detection
+- Animated DNA panel (palette swatches with copy feedback, style bars, tag badges)
+- Consistency score calculated from style weight entropy
+- Project kit generation with full DNA context in system prompt
+- Ready-to-use prompts for Midjourney, DALL-E, ChatGPT, Canva
+- Export as JSON, Markdown style guide, or portable system prompt
+- Demo mode with sample data for judges without API credentials
+- Dark mode support, mobile responsive, prefers-reduced-motion
+- AnimatePresence transitions between app states
+- Server-side input validation (field length, image size)
+- Focus-visible keyboard navigation styles
+
+## Known bugs / gotchas (all fixed)
 
 - `StyleDNAPanel.tsx` previously rendered `styleDNA.mood` instead of `styleDNA.techniques` in the Techniques section — **fixed**.
 - `granite.ts` previously used `/ml/v1beta/text/chat` with query params embedded in `baseURL` — broken URL construction. **Fixed** to `/ml/v1/text` + `defaultQuery`.
