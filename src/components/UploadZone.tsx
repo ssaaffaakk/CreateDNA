@@ -14,14 +14,13 @@ export default function UploadZone() {
     setStyleDNA,
     addImage,
     removeImage,
-    styleDNA,
     images,
     error,
     setError,
   } = useAppStore();
   const [dragOver, setDragOver] = useState(false);
   const [progress, setProgress] = useState("");
-  const [lastFiles, setLastFiles] = useState<FileList | null>(null);
+  const [failedFiles, setFailedFiles] = useState<File[] | null>(null);
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type))
@@ -32,34 +31,45 @@ export default function UploadZone() {
   };
 
   const handleFiles = useCallback(
-    async (files: FileList) => {
+    async (files: FileList | File[]) => {
+      // Overlapping runs would both merge into the same pre-drop DNA and the
+      // first one to finish would hide the spinner for the other.
+      if (useAppStore.getState().isAnalyzing) return;
+
+      setError(null);
+
       const validFiles: File[] = [];
+      const skipped: string[] = [];
       for (const file of Array.from(files)) {
         const err = validateFile(file);
         if (err) {
-          setError(err);
+          skipped.push(err);
           continue;
         }
         validFiles.push(file);
       }
 
-      setLastFiles(files);
+      if (skipped.length) setError(skipped.join(" "));
+      if (!validFiles.length) return;
+
+      const failed: File[] = [];
 
       for (const file of validFiles) {
         setAnalyzing(true);
-        setError(null);
         setProgress(`Extracting DNA from ${file.name}...`);
 
-        const base64 = await fileToBase64(file);
-        const thumbnail = await createThumbnail(file);
-
         try {
+          const base64 = await fileToBase64(file);
+          const thumbnail = await createThumbnail(file);
+
           const res = await fetch("/api/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               imageBase64: base64,
-              existingDNA: styleDNA,
+              // Read fresh: each file must merge into the DNA the previous
+              // file produced, not the one captured when the batch started.
+              existingDNA: useAppStore.getState().styleDNA,
             }),
           });
 
@@ -82,20 +92,39 @@ export default function UploadZone() {
             });
           }
         } catch (err) {
+          failed.push(file);
           setError(
             err instanceof Error ? err.message : "Analysis failed unexpectedly"
           );
         }
       }
+
+      setFailedFiles(failed.length ? failed : null);
       setAnalyzing(false);
       setProgress("");
     },
-    [styleDNA, setAnalyzing, setStyleDNA, addImage, setError]
+    [setAnalyzing, setStyleDNA, addImage, setError]
   );
+
+  const openFilePicker = useCallback(() => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = ACCEPTED_TYPES.join(",");
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) handleFiles(files);
+    };
+    input.click();
+  }, [handleFiles]);
 
   return (
     <div className="space-y-4">
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Upload portfolio images"
+        aria-busy={isAnalyzing}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -111,16 +140,12 @@ export default function UploadZone() {
             ? "border-[var(--color-accent)] bg-orange-50 dark:bg-orange-950/20 scale-[1.01]"
             : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
         }`}
-        onClick={() => {
-          const input = document.createElement("input");
-          input.type = "file";
-          input.multiple = true;
-          input.accept = ACCEPTED_TYPES.join(",");
-          input.onchange = (e) => {
-            const files = (e.target as HTMLInputElement).files;
-            if (files) handleFiles(files);
-          };
-          input.click();
+        onClick={openFilePicker}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openFilePicker();
+          }
         }}
       >
         <AnimatePresence mode="wait">
@@ -139,7 +164,9 @@ export default function UploadZone() {
                   style={{ animationDirection: "reverse", animationDuration: "0.8s" }}
                 />
               </div>
-              <p className="text-sm text-zinc-500 font-medium">{progress}</p>
+              <p className="text-sm text-zinc-500 font-medium" role="status" aria-live="polite">
+                {progress}
+              </p>
             </motion.div>
           ) : (
             <motion.div
@@ -185,19 +212,20 @@ export default function UploadZone() {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
+            role="alert"
             className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50"
           >
-            <span className="text-red-500 text-sm mt-0.5">!</span>
+            <span className="text-red-500 text-sm mt-0.5" aria-hidden="true">!</span>
             <p className="text-sm text-red-600 dark:text-red-400 flex-1">
               {error}
             </p>
             <div className="flex gap-2">
-              {lastFiles && (
+              {failedFiles && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setError(null);
-                    handleFiles(lastFiles);
+                    handleFiles(failedFiles);
                   }}
                   className="text-red-500 hover:text-red-700 dark:hover:text-red-300 text-xs font-medium"
                 >
@@ -241,9 +269,10 @@ export default function UploadZone() {
                   e.stopPropagation();
                   removeImage(img.id);
                 }}
-                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800 text-[10px] flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+                aria-label={`Remove ${img.name}`}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800 text-[10px] flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 focus-visible:opacity-100 transition-opacity"
               >
-                x
+                <span aria-hidden="true">x</span>
               </button>
             </motion.div>
           ))}
@@ -257,19 +286,23 @@ export default function UploadZone() {
 }
 
 function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
       resolve(result.split(",")[1]);
     };
+    reader.onerror = () => reject(new Error(`${file.name}: could not read file`));
     reader.readAsDataURL(file);
   });
 }
 
 function createThumbnail(file: File): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
+    // A corrupt file that passes MIME validation never fires onload; without
+    // the error path the promise never settles and the spinner sticks forever.
+    const url = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 128;
@@ -279,8 +312,13 @@ function createThumbnail(file: File): Promise<string> {
       const x = (img.width - size) / 2;
       const y = (img.height - size) / 2;
       ctx.drawImage(img, x, y, size, size, 0, 0, 128, 128);
+      URL.revokeObjectURL(url);
       resolve(canvas.toDataURL("image/jpeg", 0.7));
     };
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error(`${file.name}: not a readable image`));
+    };
+    img.src = url;
   });
 }
