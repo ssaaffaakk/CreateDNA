@@ -135,7 +135,7 @@ export default function UploadZone() {
           setDragOver(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`relative border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${
+        className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer group ${
           dragOver
             ? "border-[var(--color-accent)] bg-orange-50 dark:bg-orange-950/20 scale-[1.01]"
             : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
@@ -176,29 +176,33 @@ export default function UploadZone() {
               exit={{ opacity: 0 }}
               className="space-y-3 py-2"
             >
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-orange-50 dark:group-hover:bg-orange-950/30 transition-colors">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-orange-50 dark:group-hover:bg-orange-950/30 transition-colors">
                 <svg
-                  className="w-7 h-7 text-zinc-400 group-hover:text-[var(--color-accent)] transition-colors"
+                  className="w-6 h-6 sm:w-7 sm:h-7 text-zinc-400 group-hover:text-[var(--color-accent)] transition-colors"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth={1.5}
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M12 4.5v15m7.5-7.5h-15"
+                    d="M12 16.5V6m0 0L7.5 10.5M12 6l4.5 4.5M4.5 16.5v1.75A2.25 2.25 0 006.75 20.5h10.5a2.25 2.25 0 002.25-2.25V16.5"
                   />
                 </svg>
               </div>
               <div>
-                <p className="text-base font-medium text-zinc-700 dark:text-zinc-300">
+                <p className="text-[15px] sm:text-base font-medium text-zinc-700 dark:text-zinc-300">
                   {images.length === 0
-                    ? "Drop your creative work"
+                    ? "Drop 2–5 pieces of your work"
                     : "Add more work"}
                 </p>
-                <p className="text-sm text-zinc-400 mt-1">
-                  JPG, PNG, WebP, GIF up to 10MB
+                <p className="text-[13px] sm:text-sm text-zinc-400 mt-1">
+                  <span className="sm:hidden">Tap to choose · JPG, PNG, WebP</span>
+                  <span className="hidden sm:inline">
+                    or click to browse · JPG, PNG, WebP, GIF up to 10MB
+                  </span>
                 </p>
               </div>
             </motion.div>
@@ -285,15 +289,40 @@ export default function UploadZone() {
   );
 }
 
+// The vision model gains nothing from full-resolution input, but a 10MB photo
+// costs ~13MB of base64 on the wire. Downscaling first is the single biggest
+// win in time-to-result.
+const MAX_ANALYSIS_EDGE = 1024;
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(",")[1]);
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, MAX_ANALYSIS_EDGE / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error(`${file.name}: could not process image`));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
     };
-    reader.onerror = () => reject(new Error(`${file.name}: could not read file`));
-    reader.readAsDataURL(file);
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error(`${file.name}: not a readable image`));
+    };
+
+    img.src = url;
   });
 }
 
