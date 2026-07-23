@@ -49,17 +49,56 @@ Rules:
 - Not "modern" but "Swiss-influenced minimalism with geometric sans-serif typography"
 - Respond with ONLY the JSON object, nothing else`;
 
+export type StyleAnalysis = Omit<
+  StyleDNA,
+  "id" | "createdAt" | "updatedAt" | "imageCount" | "consistencyScore"
+>;
+
+// The vision model can return a partial or mistyped object (a refusal, a missing
+// array, or `"mood": "serene"` instead of a list). Without this, a bad response
+// either throws inside the merge helpers or persists a DNA with undefined arrays
+// that crashes the panel on every reload.
+function sanitizeAnalysis(a: Partial<StyleAnalysis> | null | undefined): StyleAnalysis {
+  const strArr = (x: unknown): string[] =>
+    Array.isArray(x)
+      ? x.filter((s): s is string => typeof s === "string" && s.length > 0)
+      : typeof x === "string" && x
+        ? [x]
+        : [];
+
+  const src = a ?? {};
+
+  return {
+    palette: (Array.isArray(src.palette) ? src.palette : []).filter(
+      (c) =>
+        typeof c?.hex === "string" &&
+        typeof c?.name === "string" &&
+        Number.isFinite(c?.weight)
+    ),
+    styles: (Array.isArray(src.styles) ? src.styles : []).filter(
+      (s) => typeof s?.name === "string" && Number.isFinite(s?.weight)
+    ),
+    composition: strArr(src.composition),
+    mood: strArr(src.mood),
+    techniques: strArr(src.techniques),
+    influences: strArr(src.influences),
+    summary: typeof src.summary === "string" ? src.summary : "",
+  };
+}
+
 export function mergeStyleDNA(
   existing: StyleDNA | null,
-  newAnalysis: Omit<StyleDNA, "id" | "createdAt" | "updatedAt" | "imageCount" | "consistencyScore">
+  rawAnalysis: Partial<StyleAnalysis>
 ): StyleDNA {
+  const newAnalysis = sanitizeAnalysis(rawAnalysis);
+
   if (!existing) {
     return {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       imageCount: 1,
-      consistencyScore: 100,
+      consistencyScore: calculateConsistency(newAnalysis.styles),
       ...newAnalysis,
     };
   }
@@ -85,8 +124,10 @@ export function mergeStyleDNA(
   };
 }
 
-function hexToRgb(hex: string): [number, number, number] {
-  const h = hex.replace("#", "");
+function hexToRgb(hex: string): [number, number, number] | null {
+  let h = hex.replace("#", "").trim().toLowerCase();
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (!/^[0-9a-f]{6}$/.test(h)) return null;
   return [
     parseInt(h.substring(0, 2), 16),
     parseInt(h.substring(2, 4), 16),
@@ -95,8 +136,12 @@ function hexToRgb(hex: string): [number, number, number] {
 }
 
 function colorDistance(a: string, b: string): number {
-  const [r1, g1, b1] = hexToRgb(a);
-  const [r2, g2, b2] = hexToRgb(b);
+  const ra = hexToRgb(a);
+  const rb = hexToRgb(b);
+  // Unparseable hex stays a distinct entry instead of producing NaN comparisons.
+  if (!ra || !rb) return Infinity;
+  const [r1, g1, b1] = ra;
+  const [r2, g2, b2] = rb;
   return Math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2);
 }
 
@@ -146,8 +191,11 @@ function mergeWeighted(
 
 function mergeUnique(old: string[], incoming: string[]): string[] {
   const normalized = new Map<string, string>();
-  for (const s of [...old, ...incoming]) {
-    normalized.set(s.toLowerCase(), s);
+  // Newest tags first so they survive the cap — otherwise the profile freezes
+  // at the first ten tags and later uploads never show up.
+  for (const s of [...incoming, ...old]) {
+    const key = s.toLowerCase();
+    if (!normalized.has(key)) normalized.set(key, s);
   }
   return [...normalized.values()].slice(0, 10);
 }
