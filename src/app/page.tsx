@@ -146,7 +146,7 @@ export default function Home() {
         </AnimatePresence>
 
         <footer className="text-center text-[11px] text-zinc-400 py-8 border-t border-zinc-100 dark:border-zinc-800/50">
-          Built with IBM Granite 4.1 · IBM AI Builders Challenge 2026
+          Built with IBM Granite on watsonx.ai · IBM AI Builders Challenge 2026
         </footer>
       </main>
     </div>
