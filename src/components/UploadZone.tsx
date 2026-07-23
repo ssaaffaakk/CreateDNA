@@ -21,6 +21,7 @@ export default function UploadZone() {
   } = useAppStore();
   const [dragOver, setDragOver] = useState(false);
   const [progress, setProgress] = useState("");
+  const [lastFiles, setLastFiles] = useState<FileList | null>(null);
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_TYPES.includes(file.type))
@@ -41,6 +42,8 @@ export default function UploadZone() {
         }
         validFiles.push(file);
       }
+
+      setLastFiles(files);
 
       for (const file of validFiles) {
         setAnalyzing(true);
@@ -188,15 +191,29 @@ export default function UploadZone() {
             <p className="text-sm text-red-600 dark:text-red-400 flex-1">
               {error}
             </p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setError(null);
-              }}
-              className="text-red-400 hover:text-red-600 text-xs"
-            >
-              dismiss
-            </button>
+            <div className="flex gap-2">
+              {lastFiles && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setError(null);
+                    handleFiles(lastFiles);
+                  }}
+                  className="text-red-500 hover:text-red-700 dark:hover:text-red-300 text-xs font-medium"
+                >
+                  Retry
+                </button>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setError(null);
+                }}
+                className="text-red-400 hover:text-red-600 text-xs"
+              >
+                dismiss
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
