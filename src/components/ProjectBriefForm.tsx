@@ -144,6 +144,18 @@ export default function ProjectBriefForm() {
           </>
         )}
       </button>
+
+      {!loading && useAppStore.getState().error && (
+        <div className="flex items-center gap-2 text-sm text-red-500">
+          <span>Generation failed.</span>
+          <button
+            onClick={handleGenerate}
+            className="underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
+          >
+            Try again
+          </button>
+        </div>
+      )}
     </motion.div>
   );
 }
