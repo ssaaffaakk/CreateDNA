@@ -200,7 +200,7 @@ function mergeUnique(old: string[], incoming: string[]): string[] {
   return [...normalized.values()].slice(0, 10);
 }
 
-function calculateConsistency(styles: StyleWeight[]): number {
+export function calculateConsistency(styles: StyleWeight[]): number {
   if (styles.length <= 1) return 100;
   const total = styles.reduce((s, v) => s + v.weight, 0);
   if (total === 0) return 0;
