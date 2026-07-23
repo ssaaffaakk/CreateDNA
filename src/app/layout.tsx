@@ -14,7 +14,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CreativeDNA — AI That Knows Your Style",
-  description: "Upload your portfolio. AI learns your creative identity. Every tool speaks your language.",
+  description:
+    "Upload your portfolio. AI learns your creative identity — palette, style, mood, techniques — and generates project kits that sound like you. Built with IBM Granite 4.1.",
+  keywords: [
+    "creative AI",
+    "style analysis",
+    "IBM Granite",
+    "portfolio",
+    "creative DNA",
+    "AI Builders Challenge",
+  ],
+  openGraph: {
+    title: "CreativeDNA — AI That Knows Your Style",
+    description:
+      "Upload your portfolio. AI extracts your creative DNA and generates project kits in your style.",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -27,7 +42,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-white dark:bg-zinc-950">
+        {children}
+      </body>
     </html>
   );
 }
