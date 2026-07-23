@@ -34,7 +34,7 @@ src/
     layout.tsx           # Root layout, metadata, OpenGraph
     globals.css          # Tailwind v4 directives, accent colors, reduced-motion support
     api/
-      analyze/route.ts   # POST /api/analyze — Granite Vision + mergeStyleDNA
+      analyze/route.ts   # POST /api/analyze — vision model + mergeStyleDNA
       generate/route.ts  # POST /api/generate — Granite text → project kit
       export/route.ts    # POST /api/export   — JSON / Markdown / system-prompt
   components/

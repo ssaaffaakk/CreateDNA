@@ -9,7 +9,7 @@ Upload your portfolio → watsonx.ai vision learns your Creative DNA → IBM Gra
 Creative professionals face a fragmented AI landscape:
 
 - **AI tools don't know who you are.** Every time you open Midjourney, ChatGPT, or Canva, you start from zero — describing your style from scratch.
-- **Inconsistent output.** Without a persistent identity, AI-generated work drifts away from your aesthetic. Studies show 62% of AI-assisted creative output doesn't match the creator's established style.
+- **Inconsistent output.** Without a persistent identity, AI-generated work drifts away from your aesthetic — every session starts from the model's defaults, not yours.
 - **Tool fatigue.** The average creative professional uses 7+ AI tools. Each requires re-explaining your palette, tone, and visual language.
 
 Your creative identity shouldn't reset every time you switch tools.
