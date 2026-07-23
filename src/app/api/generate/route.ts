@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
       brief: ProjectBrief;
     };
 
-    if (!styleDNA || !brief) {
+    if (!styleDNA || !brief?.description) {
       return NextResponse.json(
-        { error: "Missing styleDNA or brief" },
+        { error: "Missing styleDNA or brief description" },
         { status: 400 }
       );
     }
@@ -42,49 +42,64 @@ export async function POST(req: NextRequest) {
 }
 
 function buildSystemPrompt(dna: StyleDNA): string {
-  return `You are a creative director AI that deeply understands a specific creator's style.
+  const topColors = dna.palette
+    .slice(0, 5)
+    .map((c) => `${c.name} (${c.hex}, weight: ${Math.round(c.weight * 100)}%)`)
+    .join(", ");
 
-Here is their Creative DNA profile:
+  const topStyles = dna.styles
+    .map((s) => `${s.name} (${Math.round(s.weight * 100)}%)`)
+    .join(", ");
 
-STYLE SUMMARY: ${dna.summary}
+  return `You are a creative director AI that deeply understands a specific creator's style. You have analyzed ${dna.imageCount} of their portfolio pieces and built a comprehensive style profile.
 
-COLOR PALETTE: ${dna.palette.map((c) => `${c.name} (${c.hex}, weight: ${c.weight})`).join(", ")}
+CREATOR'S STYLE DNA:
 
-COMPOSITION TRAITS: ${dna.composition.join(", ")}
+Summary: ${dna.summary}
 
-STYLE INFLUENCES: ${dna.styles.map((s) => `${s.name} (${s.weight})`).join(", ")}
+Color palette: ${topColors}
 
-MOOD/TONE: ${dna.mood.join(", ")}
+Composition: ${dna.composition.join(", ")}
 
-TECHNIQUES: ${dna.techniques.join(", ")}
+Style influences: ${topStyles}
 
-INFLUENCES: ${dna.influences.join(", ")}
+Mood/emotional tone: ${dna.mood.join(", ")}
 
-You must generate creative guidance that is CONSISTENT with this creator's identity. Every suggestion should feel like it came from THEM, not from a generic AI.
+Visual techniques: ${dna.techniques.join(", ")}
 
-Respond ONLY with valid JSON, no markdown, no explanation.`;
+Creative influences: ${dna.influences.join(", ")}
+
+Style consistency: ${dna.consistencyScore}% (${dna.consistencyScore >= 80 ? "highly focused — lean into their signature look" : dna.consistencyScore >= 50 ? "versatile — adapt to the project while keeping core identity" : "eclectic — find the thread that connects their work"})
+
+RULES:
+- Every suggestion MUST be consistent with this creator's visual identity
+- Palette suggestions should extend their existing colors, not replace them
+- Typography should match the energy and era of their style influences
+- Prompts should be specific enough to reproduce their aesthetic
+- Write as if you ARE this creator's creative director who knows them deeply
+- Respond ONLY with valid JSON — no markdown fences, no explanation`;
 }
 
 function buildUserPrompt(brief: ProjectBrief): string {
   return `New project brief:
 - Description: ${brief.description}
-- Platform: ${brief.platform}
-- Target audience: ${brief.audience}
-- Constraints: ${brief.constraints}
+${brief.platform ? `- Platform: ${brief.platform}` : ""}
+${brief.audience ? `- Target audience: ${brief.audience}` : ""}
+${brief.constraints ? `- Constraints: ${brief.constraints}` : ""}
 
-Based on MY creative DNA, generate a project preparation kit:
+Generate a complete project preparation kit in MY style:
 
 {
+  "brief": "Rewrite the brief in my creative voice — as if I wrote it myself",
   "palette": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"],
-  "typography": "Recommended font pairing and why it fits my style",
-  "tone": "Writing tone guide based on my creative identity",
+  "typography": "Font pairing recommendation with reasoning tied to my style DNA",
+  "tone": "Writing tone and voice guide based on my creative identity",
   "moodboard": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
-  "brief": "A rewritten brief that incorporates my style DNA — as if I wrote it myself",
   "prompts": [
-    {"tool": "Midjourney", "prompt": "A ready-to-use prompt incorporating my style DNA"},
-    {"tool": "DALL-E", "prompt": "A ready-to-use prompt incorporating my style DNA"},
-    {"tool": "ChatGPT", "prompt": "A system prompt that makes ChatGPT write in my creative voice"},
-    {"tool": "Canva", "prompt": "Style guidelines for Canva design"}
+    {"tool": "Midjourney", "prompt": "A detailed prompt that captures my visual style for this project"},
+    {"tool": "DALL-E", "prompt": "A detailed prompt adapted for DALL-E that captures my aesthetic"},
+    {"tool": "ChatGPT", "prompt": "A system prompt that makes ChatGPT write in my creative voice for this project"},
+    {"tool": "Canva", "prompt": "Specific style guidelines for designing in Canva in my style"}
   ]
 }`;
 }

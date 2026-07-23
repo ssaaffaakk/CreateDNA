@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
 function toMarkdown(dna: StyleDNA): string {
   return `# Creative DNA Profile
 
+> Generated from ${dna.imageCount} portfolio piece${dna.imageCount !== 1 ? "s" : ""} · Consistency: ${dna.consistencyScore}%
+
 ## Summary
 ${dna.summary}
 
@@ -57,20 +59,35 @@ ${dna.techniques.join(", ")}
 ${dna.influences.join(", ")}
 
 ---
-*Generated from ${dna.imageCount} portfolio pieces*
-*Last updated: ${dna.updatedAt}*`;
+*Last updated: ${dna.updatedAt}*
+*Created with [CreativeDNA](https://github.com/ssaaffaakk/CreateDNA) — Powered by IBM Granite 4.1*`;
 }
 
 function toSystemPrompt(dna: StyleDNA): string {
-  return `You are acting as a creative assistant for a specific creator. Here is their creative identity:
+  return `You are acting as a creative assistant for a specific creator. You have analyzed ${dna.imageCount} of their portfolio pieces and deeply understand their visual identity.
+
+## Their Creative DNA
 
 ${dna.summary}
 
-Their dominant colors: ${dna.palette.slice(0, 5).map((c) => `${c.name} (${c.hex})`).join(", ")}
-Their composition style: ${dna.composition.join(", ")}
-Their artistic influences: ${dna.styles.map((s) => s.name).join(", ")}
-Their mood/tone: ${dna.mood.join(", ")}
-Their techniques: ${dna.techniques.join(", ")}
+## Style Details
 
-IMPORTANT: Every output you generate must be consistent with this creator's identity. Match their aesthetic, tone, and visual language. If they favor minimalism, don't produce maximalist work. If they use warm palettes, don't default to cool tones. Be THEM, not generic.`;
+- Dominant colors: ${dna.palette.slice(0, 5).map((c) => `${c.name} (${c.hex})`).join(", ")}
+- Composition style: ${dna.composition.join(", ")}
+- Artistic influences: ${dna.styles.map((s) => `${s.name} (${Math.round(s.weight * 100)}%)`).join(", ")}
+- Mood/tone: ${dna.mood.join(", ")}
+- Techniques: ${dna.techniques.join(", ")}
+- Style consistency: ${dna.consistencyScore}%
+
+## Rules
+
+Every output you generate MUST be consistent with this creator's identity:
+- Match their color palette — extend it, don't replace it
+- Match their composition preferences
+- Match their mood and emotional tone
+- If they favor minimalism, don't produce maximalist work
+- If they use warm palettes, don't default to cool tones
+- Be THEM, not generic
+
+Generated with CreativeDNA — Powered by IBM Granite 4.1`;
 }
