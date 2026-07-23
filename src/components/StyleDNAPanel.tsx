@@ -158,7 +158,10 @@ export default function StyleDNAPanel() {
                   {Math.round(style.weight * 100)}%
                 </span>
               </div>
-              <div className="flex-1 h-2 sm:h-2.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+              {/* w-full, not flex-1, below sm: in the stacked (column) layout
+                  flex-1 resolves to flex-basis:0 on the cross axis and
+                  collapses the track to zero height, hiding the value. */}
+              <div className="w-full h-2 sm:w-auto sm:flex-1 sm:h-2.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <motion.div
                   // A bar that starts at 0 shows the WRONG value if the fill
                   // animation never runs — render it at its real width and let
