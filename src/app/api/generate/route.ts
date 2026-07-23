@@ -18,6 +18,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const MAX_FIELD_LENGTH = 2000;
+    if (brief.description.length > MAX_FIELD_LENGTH ||
+        (brief.platform && brief.platform.length > MAX_FIELD_LENGTH) ||
+        (brief.audience && brief.audience.length > MAX_FIELD_LENGTH) ||
+        (brief.constraints && brief.constraints.length > MAX_FIELD_LENGTH)) {
+      return NextResponse.json(
+        { error: "Input too long (max 2000 characters per field)" },
+        { status: 400 }
+      );
+    }
+
     const systemPrompt = buildSystemPrompt(styleDNA);
     const userPrompt = buildUserPrompt(brief);
 

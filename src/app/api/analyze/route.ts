@@ -15,6 +15,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
+    const MAX_BASE64_SIZE = 15 * 1024 * 1024;
+    if (imageBase64.length > MAX_BASE64_SIZE) {
+      return NextResponse.json({ error: "Image too large (max ~10MB)" }, { status: 400 });
+    }
+
     const raw = await analyzeImage(imageBase64, ANALYSIS_PROMPT);
 
     let parsed;
