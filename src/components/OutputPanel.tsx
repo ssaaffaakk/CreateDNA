@@ -120,7 +120,7 @@ export default function OutputPanel() {
       )}
 
       {/* Typography & Tone */}
-      <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
+      <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {generatedOutput.typography && (
           <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
             <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
@@ -181,7 +181,7 @@ export default function OutputPanel() {
         <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
           Export your Creative DNA
         </h3>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {(
             [
               { key: "json", label: "JSON" },

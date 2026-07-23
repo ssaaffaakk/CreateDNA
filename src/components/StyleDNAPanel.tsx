@@ -35,7 +35,7 @@ export default function StyleDNAPanel() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 dna-helix"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold tracking-tight">
             Your Creative DNA
@@ -178,7 +178,7 @@ export default function StyleDNAPanel() {
       )}
 
       {/* Mood & Techniques */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
             Mood
