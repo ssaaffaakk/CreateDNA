@@ -35,6 +35,12 @@ export default function OutputPanel() {
         body: JSON.stringify({ styleDNA, format }),
       });
       const data = await res.json();
+      // Without this, a failed export downloads a file whose entire contents
+      // are the literal text "undefined".
+      if (!res.ok || data.export === undefined) {
+        throw new Error(data.error || "Export failed");
+      }
+
       const content =
         typeof data.export === "string"
           ? data.export

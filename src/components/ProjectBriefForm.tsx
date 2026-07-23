@@ -5,8 +5,11 @@ import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 
 export default function ProjectBriefForm() {
-  const { styleDNA, setGeneratedOutput, setError } = useAppStore();
+  const { styleDNA, setGeneratedOutput } = useAppStore();
   const [loading, setLoading] = useState(false);
+  // Local, not the shared store error — otherwise an upload error elsewhere
+  // renders "Generation failed" here and offers a spurious retry.
+  const [genError, setGenError] = useState<string | null>(null);
   const [brief, setBrief] = useState({
     description: "",
     platform: "",
@@ -19,7 +22,7 @@ export default function ProjectBriefForm() {
   const handleGenerate = async () => {
     if (!brief.description.trim()) return;
     setLoading(true);
-    setError(null);
+    setGenError(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -37,7 +40,7 @@ export default function ProjectBriefForm() {
         setGeneratedOutput(data.output);
       }
     } catch (err) {
-      setError(
+      setGenError(
         err instanceof Error ? err.message : "Generation failed unexpectedly"
       );
     }
@@ -65,10 +68,14 @@ export default function ProjectBriefForm() {
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
+          <label
+            htmlFor="brief-description"
+            className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5"
+          >
             What are you creating?
           </label>
           <textarea
+            id="brief-description"
             className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
             rows={3}
             placeholder="Instagram campaign for a coffee brand launch, minimalist poster series for a music festival..."
@@ -81,10 +88,14 @@ export default function ProjectBriefForm() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
+            <label
+              htmlFor="brief-platform"
+              className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5"
+            >
               Platform
             </label>
             <input
+              id="brief-platform"
               className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
               placeholder="Instagram, Print, Web..."
               value={brief.platform}
@@ -94,10 +105,14 @@ export default function ProjectBriefForm() {
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
+            <label
+              htmlFor="brief-audience"
+              className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5"
+            >
               Audience
             </label>
             <input
+              id="brief-audience"
               className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
               placeholder="Gen Z, professionals..."
               value={brief.audience}
@@ -109,10 +124,14 @@ export default function ProjectBriefForm() {
         </div>
 
         <div>
-          <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
+          <label
+            htmlFor="brief-constraints"
+            className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5"
+          >
             Constraints
           </label>
           <input
+            id="brief-constraints"
             className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
             placeholder="Budget, timeline, format requirements..."
             value={brief.constraints}
@@ -145,9 +164,9 @@ export default function ProjectBriefForm() {
         )}
       </button>
 
-      {!loading && useAppStore.getState().error && (
-        <div className="flex items-center gap-2 text-sm text-red-500">
-          <span>Generation failed.</span>
+      {!loading && genError && (
+        <div role="alert" className="flex items-center gap-2 text-sm text-red-500">
+          <span>{genError}</span>
           <button
             onClick={handleGenerate}
             className="underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"

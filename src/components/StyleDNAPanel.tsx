@@ -98,10 +98,19 @@ export default function StyleDNAPanel() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
                 transition={{ delay: i * 0.05 }}
-                className="text-center cursor-pointer group"
+                className="text-center cursor-pointer group rounded-lg"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Copy ${color.name} ${color.hex}`}
                 onClick={() => copyColor(color.hex)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    copyColor(color.hex);
+                  }
+                }}
                 title={`${color.name} — click to copy`}
               >
                 <div
