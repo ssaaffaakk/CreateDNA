@@ -7,7 +7,8 @@ import { useAppStore } from "@/lib/store";
 export default function OutputPanel() {
   const { generatedOutput, styleDNA } = useAppStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [exporting, setExporting] = useState(false);
+  const [copiedHex, setCopiedHex] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<string | null>(null);
 
   if (!generatedOutput) return null;
 
@@ -17,8 +18,16 @@ export default function OutputPanel() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const handleExport = async (format: "json" | "markdown" | "system-prompt") => {
-    setExporting(true);
+  const copyHex = (hex: string) => {
+    navigator.clipboard.writeText(hex);
+    setCopiedHex(hex);
+    setTimeout(() => setCopiedHex(null), 1500);
+  };
+
+  const handleExport = async (
+    format: "json" | "markdown" | "system-prompt"
+  ) => {
+    setExporting(format);
     try {
       const res = await fetch("/api/export", {
         method: "POST",
@@ -31,146 +40,166 @@ export default function OutputPanel() {
           ? data.export
           : JSON.stringify(data.export, null, 2);
 
+      const ext =
+        format === "json" ? "json" : format === "markdown" ? "md" : "txt";
       const blob = new Blob([content], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `creative-dna.${format === "json" ? "json" : format === "markdown" ? "md" : "txt"}`;
+      a.download = `creative-dna.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Export failed:", err);
     }
-    setExporting(false);
+    setExporting(null);
+  };
+
+  const stagger = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.08 } },
+  };
+
+  const fadeUp = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0 },
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial="hidden"
+      animate="show"
+      variants={stagger}
       className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
     >
-      <h2 className="text-xl font-semibold">Your project kit</h2>
+      <motion.div variants={fadeUp}>
+        <h2 className="text-xl font-semibold tracking-tight">
+          Your project kit
+        </h2>
+        <p className="text-xs text-zinc-500 mt-0.5">
+          Generated from your Creative DNA
+        </p>
+      </motion.div>
 
       {/* Rewritten Brief */}
-      <div>
+      <motion.div variants={fadeUp}>
         <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
           Brief — in your voice
         </h3>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed bg-white dark:bg-zinc-800 p-4 rounded-lg border border-zinc-200 dark:border-zinc-700">
+        <div className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed bg-white dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
           {generatedOutput.brief}
-        </p>
-      </div>
+        </div>
+      </motion.div>
 
       {/* Palette */}
-      {generatedOutput.palette && (
-        <div>
+      {generatedOutput.palette && generatedOutput.palette.length > 0 && (
+        <motion.div variants={fadeUp}>
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
             Project palette
           </h3>
           <div className="flex gap-2">
             {generatedOutput.palette.map((hex) => (
-              <div key={hex} className="text-center">
+              <motion.div
+                key={hex}
+                className="text-center cursor-pointer"
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => copyHex(hex)}
+              >
                 <div
-                  className="w-14 h-14 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:scale-105 transition-transform"
+                  className="w-14 h-14 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow"
                   style={{ backgroundColor: hex }}
-                  onClick={() => navigator.clipboard.writeText(hex)}
-                  title={`Click to copy ${hex}`}
                 />
                 <span className="text-[10px] text-zinc-500 mt-1 block font-mono">
-                  {hex}
+                  {copiedHex === hex ? "Copied!" : hex}
                 </span>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Typography & Tone */}
-      <div className="grid grid-cols-2 gap-4">
+      <motion.div variants={fadeUp} className="grid grid-cols-2 gap-4">
         {generatedOutput.typography && (
-          <div>
+          <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
             <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
               Typography
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {generatedOutput.typography}
             </p>
           </div>
         )}
         {generatedOutput.tone && (
-          <div>
+          <div className="bg-white dark:bg-zinc-800 p-4 rounded-xl border border-zinc-200 dark:border-zinc-700">
             <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
               Tone of voice
             </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
               {generatedOutput.tone}
             </p>
           </div>
         )}
-      </div>
+      </motion.div>
 
-      {/* AI Prompts — Portable */}
+      {/* AI Prompts */}
       {generatedOutput.prompts && generatedOutput.prompts.length > 0 && (
-        <div>
+        <motion.div variants={fadeUp}>
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
             Ready-to-use prompts — your DNA, any tool
           </h3>
           <div className="space-y-2">
             {generatedOutput.prompts.map((p, i) => (
-              <div
+              <motion.div
                 key={i}
-                className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3"
+                variants={fadeUp}
+                className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 hover:border-[var(--color-accent)]/30 transition-colors"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded">
+                  <span className="text-xs font-semibold text-[var(--color-accent)] bg-orange-50 dark:bg-orange-950/30 px-2.5 py-1 rounded-lg">
                     {p.tool}
                   </span>
                   <button
                     onClick={() => copyToClipboard(p.prompt, i)}
-                    className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                    className="text-xs px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
                   >
                     {copiedIndex === i ? "Copied!" : "Copy"}
                   </button>
                 </div>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono leading-relaxed">
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 font-mono leading-relaxed whitespace-pre-wrap">
                   {p.prompt}
                 </p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Export */}
-      <div>
+      <motion.div variants={fadeUp}>
         <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
-          Export your creative DNA
+          Export your Creative DNA
         </h3>
         <div className="flex gap-2">
-          <button
-            onClick={() => handleExport("json")}
-            disabled={exporting}
-            className="flex-1 py-2 px-3 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            JSON
-          </button>
-          <button
-            onClick={() => handleExport("markdown")}
-            disabled={exporting}
-            className="flex-1 py-2 px-3 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            Markdown
-          </button>
-          <button
-            onClick={() => handleExport("system-prompt")}
-            disabled={exporting}
-            className="flex-1 py-2 px-3 text-sm rounded-lg border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-          >
-            System prompt
-          </button>
+          {(
+            [
+              { key: "json", label: "JSON" },
+              { key: "markdown", label: "Style Guide" },
+              { key: "system-prompt", label: "System Prompt" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => handleExport(key)}
+              disabled={exporting !== null}
+              className="flex-1 py-2.5 px-3 text-sm rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all disabled:opacity-50 active:scale-[0.98]"
+            >
+              {exporting === key ? "..." : label}
+            </button>
+          ))}
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

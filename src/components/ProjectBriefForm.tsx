@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 
 export default function ProjectBriefForm() {
-  const { styleDNA, setGeneratedOutput } = useAppStore();
+  const { styleDNA, setGeneratedOutput, setError } = useAppStore();
   const [loading, setLoading] = useState(false);
   const [brief, setBrief] = useState({
     description: "",
@@ -17,43 +17,61 @@ export default function ProjectBriefForm() {
   if (!styleDNA) return null;
 
   const handleGenerate = async () => {
+    if (!brief.description.trim()) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ styleDNA, brief }),
       });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || `Generation failed (${res.status})`);
+      }
+
       const data = await res.json();
       if (data.output) {
         setGeneratedOutput(data.output);
       }
     } catch (err) {
-      console.error("Generation failed:", err);
+      setError(
+        err instanceof Error ? err.message : "Generation failed unexpectedly"
+      );
     }
     setLoading(false);
   };
+
+  const fieldCount = Object.values(brief).filter((v) => v.trim()).length;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-4 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
+      className="space-y-5 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
     >
-      <h2 className="text-xl font-semibold">New project</h2>
-      <p className="text-sm text-zinc-500">
-        Describe your project — AI will prepare everything in YOUR style.
-      </p>
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight">New project</h2>
+        <p className="text-sm text-zinc-500 mt-1">
+          Describe your project. AI generates everything in{" "}
+          <span className="text-[var(--color-accent)] font-medium">
+            your style
+          </span>
+          .
+        </p>
+      </div>
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1">
+          <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
             What are you creating?
           </label>
           <textarea
-            className="w-full p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm resize-none"
+            className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
             rows={3}
-            placeholder="e.g., Instagram campaign for a coffee brand launch..."
+            placeholder="Instagram campaign for a coffee brand launch, minimalist poster series for a music festival..."
             value={brief.description}
             onChange={(e) =>
               setBrief((b) => ({ ...b, description: e.target.value }))
@@ -63,12 +81,12 @@ export default function ProjectBriefForm() {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1">
+            <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
               Platform
             </label>
             <input
-              className="w-full p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
-              placeholder="Instagram, TikTok, Web..."
+              className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
+              placeholder="Instagram, Print, Web..."
               value={brief.platform}
               onChange={(e) =>
                 setBrief((b) => ({ ...b, platform: e.target.value }))
@@ -76,12 +94,12 @@ export default function ProjectBriefForm() {
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1">
+            <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
               Audience
             </label>
             <input
-              className="w-full p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
-              placeholder="25-35, tech-savvy..."
+              className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
+              placeholder="Gen Z, professionals..."
               value={brief.audience}
               onChange={(e) =>
                 setBrief((b) => ({ ...b, audience: e.target.value }))
@@ -91,11 +109,11 @@ export default function ProjectBriefForm() {
         </div>
 
         <div>
-          <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1">
+          <label className="text-xs uppercase tracking-wider text-zinc-500 block mb-1.5">
             Constraints
           </label>
           <input
-            className="w-full p-3 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm"
+            className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
             placeholder="Budget, timeline, format requirements..."
             value={brief.constraints}
             onChange={(e) =>
@@ -107,8 +125,8 @@ export default function ProjectBriefForm() {
 
       <button
         onClick={handleGenerate}
-        disabled={loading || !brief.description}
-        className="w-full py-3 px-4 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-medium transition-colors flex items-center justify-center gap-2"
+        disabled={loading || !brief.description.trim()}
+        className="w-full py-3 px-4 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
       >
         {loading ? (
           <>
@@ -116,7 +134,14 @@ export default function ProjectBriefForm() {
             Generating in your style...
           </>
         ) : (
-          "Generate project kit"
+          <>
+            Generate project kit
+            {fieldCount > 1 && (
+              <span className="text-xs opacity-60">
+                ({fieldCount}/4 fields)
+              </span>
+            )}
+          </>
         )}
       </button>
     </motion.div>

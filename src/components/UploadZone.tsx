@@ -4,19 +4,48 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
 export default function UploadZone() {
-  const { isAnalyzing, setAnalyzing, setStyleDNA, addImage, styleDNA, images } =
-    useAppStore();
+  const {
+    isAnalyzing,
+    setAnalyzing,
+    setStyleDNA,
+    addImage,
+    removeImage,
+    styleDNA,
+    images,
+    error,
+    setError,
+  } = useAppStore();
   const [dragOver, setDragOver] = useState(false);
   const [progress, setProgress] = useState("");
 
+  const validateFile = (file: File): string | null => {
+    if (!ACCEPTED_TYPES.includes(file.type))
+      return `${file.name}: unsupported format. Use JPG, PNG, WebP, or GIF.`;
+    if (file.size > MAX_FILE_SIZE)
+      return `${file.name}: too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 10MB.`;
+    return null;
+  };
+
   const handleFiles = useCallback(
     async (files: FileList) => {
+      const validFiles: File[] = [];
       for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) continue;
+        const err = validateFile(file);
+        if (err) {
+          setError(err);
+          continue;
+        }
+        validFiles.push(file);
+      }
 
+      for (const file of validFiles) {
         setAnalyzing(true);
-        setProgress(`Analyzing ${file.name}...`);
+        setError(null);
+        setProgress(`Extracting DNA from ${file.name}...`);
 
         const base64 = await fileToBase64(file);
         const thumbnail = await createThumbnail(file);
@@ -31,6 +60,13 @@ export default function UploadZone() {
             }),
           });
 
+          if (!res.ok) {
+            const errData = await res.json().catch(() => null);
+            throw new Error(
+              errData?.error || `Analysis failed (${res.status})`
+            );
+          }
+
           const data = await res.json();
 
           if (data.dna) {
@@ -43,13 +79,15 @@ export default function UploadZone() {
             });
           }
         } catch (err) {
-          console.error("Analysis failed:", err);
+          setError(
+            err instanceof Error ? err.message : "Analysis failed unexpectedly"
+          );
         }
       }
       setAnalyzing(false);
       setProgress("");
     },
-    [styleDNA, setAnalyzing, setStyleDNA, addImage]
+    [styleDNA, setAnalyzing, setStyleDNA, addImage, setError]
   );
 
   return (
@@ -65,16 +103,16 @@ export default function UploadZone() {
           setDragOver(false);
           handleFiles(e.dataTransfer.files);
         }}
-        className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all cursor-pointer ${
+        className={`relative border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group ${
           dragOver
-            ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20"
-            : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400"
+            ? "border-[var(--color-accent)] bg-orange-50 dark:bg-orange-950/20 scale-[1.01]"
+            : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
         }`}
         onClick={() => {
           const input = document.createElement("input");
           input.type = "file";
           input.multiple = true;
-          input.accept = "image/*";
+          input.accept = ACCEPTED_TYPES.join(",");
           input.onchange = (e) => {
             const files = (e.target as HTMLInputElement).files;
             if (files) handleFiles(files);
@@ -86,13 +124,19 @@ export default function UploadZone() {
           {isAnalyzing ? (
             <motion.div
               key="analyzing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-3"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="space-y-4 py-2"
             >
-              <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-sm text-zinc-500">{progress}</p>
+              <div className="relative w-12 h-12 mx-auto">
+                <div className="absolute inset-0 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
+                <div
+                  className="absolute inset-2 border-2 border-[var(--color-accent-light)] border-b-transparent rounded-full animate-spin"
+                  style={{ animationDirection: "reverse", animationDuration: "0.8s" }}
+                />
+              </div>
+              <p className="text-sm text-zinc-500 font-medium">{progress}</p>
             </motion.div>
           ) : (
             <motion.div
@@ -100,34 +144,94 @@ export default function UploadZone() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-3"
+              className="space-y-3 py-2"
             >
-              <div className="text-4xl">+</div>
-              <p className="text-lg font-medium">Drop your work here</p>
-              <p className="text-sm text-zinc-500">
-                Upload portfolio pieces — each one teaches AI more about your style
-              </p>
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-orange-50 dark:group-hover:bg-orange-950/30 transition-colors">
+                <svg
+                  className="w-7 h-7 text-zinc-400 group-hover:text-[var(--color-accent)] transition-colors"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 4.5v15m7.5-7.5h-15"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-base font-medium text-zinc-700 dark:text-zinc-300">
+                  {images.length === 0
+                    ? "Drop your creative work"
+                    : "Add more work"}
+                </p>
+                <p className="text-sm text-zinc-400 mt-1">
+                  JPG, PNG, WebP, GIF up to 10MB
+                </p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50"
+          >
+            <span className="text-red-500 text-sm mt-0.5">!</span>
+            <p className="text-sm text-red-600 dark:text-red-400 flex-1">
+              {error}
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setError(null);
+              }}
+              className="text-red-400 hover:text-red-600 text-xs"
+            >
+              dismiss
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {images.length > 0 && (
         <div className="flex gap-2 flex-wrap">
-          {images.map((img) => (
+          {images.map((img, i) => (
             <motion.div
               key={img.id}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="w-16 h-16 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700"
+              transition={{ delay: i * 0.05 }}
+              className="relative group/thumb"
             >
-              <img
-                src={img.thumbnail}
-                alt={img.name}
-                className="w-full h-full object-cover"
-              />
+              <div className="w-16 h-16 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                <img
+                  src={img.thumbnail}
+                  alt={img.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeImage(img.id);
+                }}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800 text-[10px] flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity"
+              >
+                x
+              </button>
             </motion.div>
           ))}
+          <div className="w-16 h-16 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-zinc-400 text-xs">
+            {images.length}
+          </div>
         </div>
       )}
     </div>
