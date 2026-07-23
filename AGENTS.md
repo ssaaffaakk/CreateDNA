@@ -30,9 +30,10 @@ Users upload portfolio images → watsonx.ai vision (Llama 4 Maverick) extracts 
 ```
 src/
   app/
-    page.tsx             # Single-page UI — four panels with AnimatePresence transitions
+    page.tsx             # Single-page UI — landing, upload, DNA, kit
     layout.tsx           # Root layout, metadata, OpenGraph
-    globals.css          # Tailwind v4 directives, accent colors, reduced-motion support
+    global-error.tsx     # Recovery screen with a "Clear saved data" escape hatch
+    globals.css          # Tailwind v4 directives, accent + cool tokens, reduced motion
     api/
       analyze/route.ts   # POST /api/analyze — vision model + mergeStyleDNA
       generate/route.ts  # POST /api/generate — Granite text → project kit
@@ -44,10 +45,33 @@ src/
     OutputPanel.tsx       # Project kit display + copy buttons + export downloads
   lib/
     granite.ts            # IAM token cache + fetch-based watsonx chat client
-    store.ts              # Zustand store (StyleDNA, images, project, output)
+    store.ts              # Zustand store + persisted-schema version/migrate
     style-dna.ts          # StyleDNA types, ANALYSIS_PROMPT, mergeStyleDNA logic
+    api-error.ts          # Maps upstream errors to safe client messages
+    request-guard.ts      # Body-size rejection + prompt-string clamping
     mock-data.ts          # Demo mode sample data for judges without API keys
 ```
+
+## Persisted state rules
+
+- `localStorage` is **untrusted input** — it may hold a shape written by an
+  older build. Everything read from it goes through `sanitizePersisted` in
+  `store.ts` before reaching a component.
+- Bump `PERSIST_VERSION` on any breaking change to the persisted shape.
+  Zustand stamps blobs `version: 0` by default, so a `migrate` never runs
+  unless the version is bumped.
+- Never persist transient UI state. `partialize` deliberately excludes
+  `isAnalyzing` and `error`; persisting `isAnalyzing` once left the uploader
+  permanently blocked after a reload.
+
+## Motion rules
+
+- Product content (DNA profile, project kit, landing) must be visible without
+  waiting for an animation frame — use `initial={false}`. A background tab
+  stops rAF, and a stalled frame would otherwise leave the page blank.
+- Never gate a conditional render's disappearance on an exit animation.
+- Keep motion that carries data (palette bar fill, style weight bars);
+  drop motion that only decorates.
 
 ## Environment variables
 
@@ -102,8 +126,11 @@ Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:
 - Demo mode with sample data for judges without API credentials
 - Dark mode support, mobile responsive, prefers-reduced-motion
 - AnimatePresence transitions between app states
-- Server-side input validation (field length, image size)
-- Focus-visible keyboard navigation styles
+- Server-side input validation (body size, field length, response shape)
+- Client-side downscale to 1024px before upload — ~84% smaller payload
+- Landing shows a real example profile so the product demonstrates itself
+- Versioned persisted state with sanitising migrate + recovery screen
+- Full keyboard operation (dropzone, palette swatches, labelled controls)
 
 ## Known bugs / gotchas (all fixed)
 
