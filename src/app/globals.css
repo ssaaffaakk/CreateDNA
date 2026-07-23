@@ -6,6 +6,10 @@
   --color-accent: #e86c25;
   --color-accent-light: #f4a261;
   --color-accent-dark: #c24d0a;
+  /* Cool counterpart so the UI is not a single-hue orange wash. Used for the
+     analysis/measurement side of the product (DNA strand, data readouts). */
+  --color-cool: #3d9aa1;
+  --color-cool-light: #6fc0c6;
 }
 
 @keyframes pulse-ring {
