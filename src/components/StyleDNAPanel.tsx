@@ -31,8 +31,8 @@ export default function StyleDNAPanel() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      // Same reasoning as OutputPanel: the profile itself never fades in.
+      initial={false}
       className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 dna-helix"
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -97,7 +97,7 @@ export default function StyleDNAPanel() {
           Palette
         </h3>
         <div className="flex gap-2 flex-wrap">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence initial={false} mode="popLayout">
             {styleDNA.palette.slice(0, 6).map((color, i) => (
               <motion.div
                 key={color.hex}
@@ -181,7 +181,7 @@ export default function StyleDNAPanel() {
             Composition
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence initial={false} mode="popLayout">
               {styleDNA.composition.map((c, i) => (
                 <motion.span
                   key={c}
@@ -208,7 +208,7 @@ export default function StyleDNAPanel() {
             Mood
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence initial={false} mode="popLayout">
               {styleDNA.mood.map((m, i) => (
                 <motion.span
                   key={m}
@@ -231,7 +231,7 @@ export default function StyleDNAPanel() {
             Techniques
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            <AnimatePresence mode="popLayout">
+            <AnimatePresence initial={false} mode="popLayout">
               {styleDNA.techniques.map((t, i) => (
                 <motion.span
                   key={t}

@@ -73,7 +73,10 @@ export default function OutputPanel() {
 
   return (
     <motion.div
-      initial="hidden"
+      // The kit is the deliverable — it must be readable even if the entry
+      // animation never runs (background tab, stalled frame, slow device).
+      // initial={false} stops the hidden variant from propagating to children.
+      initial={false}
       animate="show"
       variants={stagger}
       className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"

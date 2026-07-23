@@ -67,60 +67,115 @@ export default function Home() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
-        {/* Landing hero — only when no DNA */}
-        <AnimatePresence>
-          {!styleDNA && images.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
-              className="text-center space-y-5 pt-8 pb-4"
-            >
-              <div className="inline-flex items-center gap-2 text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                IBM AI Builders Challenge 2026
+        {/* Landing hero — only when no DNA. Plain conditional render, not
+            AnimatePresence: whether the landing disappears must not depend on
+            an exit animation completing. */}
+        {!styleDNA && images.length === 0 && (
+          <div className="space-y-6">
+              <div className="text-center space-y-3">
+                <h2 className="text-[26px] sm:text-4xl font-bold tracking-tight leading-[1.15] text-balance">
+                  Your style,{" "}
+                  <span className="text-[var(--color-accent)]">
+                    readable by any AI
+                  </span>
+                </h2>
+                <p className="text-sm sm:text-base text-zinc-500 max-w-lg mx-auto leading-relaxed text-pretty">
+                  Drop in your work. We read the palette, composition and
+                  technique behind it — then write the prompts that reproduce
+                  it anywhere.
+                </p>
               </div>
 
-              <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-[1.1]">
-                AI that learns
-                <br />
-                <span className="text-[var(--color-accent)]">who you are</span>
-                <br />
-                as a creator
-              </h2>
-
-              <p className="text-zinc-500 max-w-md mx-auto text-base leading-relaxed">
-                Upload your portfolio. AI extracts your creative DNA — palette,
-                style, mood, techniques — and generates project kits that sound
-                like <em>you</em>.
-              </p>
-
-              <div className="flex items-center justify-center gap-6 text-xs text-zinc-400 pt-2">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                  Upload work
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                  See your DNA
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-                  Generate in your style
-                </span>
-              </div>
-
-              <button
-                onClick={loadDemo}
-                className="mt-4 text-sm text-zinc-400 hover:text-[var(--color-accent)] transition-colors underline underline-offset-4 decoration-zinc-700 hover:decoration-[var(--color-accent)]"
-              >
-                See a demo with sample data
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {/* The three steps, shown as the actual pipeline rather than
+                  prose — step 1 is the upload control directly below. */}
+              <ol className="flex items-stretch justify-center gap-1.5 sm:gap-3 text-left">
+                {[
+                  { n: 1, short: "Upload", label: "Upload work", sub: "2–5 pieces" },
+                  { n: 2, short: "Read DNA", label: "Read the DNA", sub: "palette + style" },
+                  { n: 3, short: "Generate", label: "Generate", sub: "kit + prompts" },
+                ].map((s) => (
+                  <li
+                    key={s.n}
+                    className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 px-2 sm:px-3 py-2"
+                  >
+                    <span className="shrink-0 w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[11px] font-medium text-zinc-500 flex items-center justify-center tabular-nums">
+                      {s.n}
+                    </span>
+                    <span className="min-w-0">
+                      {/* Short labels below sm so nothing truncates on a phone */}
+                      <span className="block text-[12px] sm:text-[13px] font-medium leading-tight">
+                        <span className="sm:hidden">{s.short}</span>
+                        <span className="hidden sm:inline">{s.label}</span>
+                      </span>
+                      <span className="hidden sm:block text-[11px] text-zinc-400 leading-tight truncate">
+                        {s.sub}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+          </div>
+        )}
 
         <UploadZone />
+
+        {/* Show the product's actual output before anything is uploaded — the
+            palette bar is real MOCK_DNA data, the same shape a real analysis
+            produces, so the page demonstrates itself instead of describing. */}
+        {!styleDNA && images.length === 0 && (
+          <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+              <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/70">
+                <p className="text-[11px] uppercase tracking-wider text-zinc-500">
+                  Example profile
+                </p>
+                <span className="text-[11px] text-zinc-400 tabular-nums">
+                  from {MOCK_DNA.imageCount} pieces
+                </span>
+              </div>
+
+              <div className="p-4 sm:p-5 space-y-4">
+                {/* Weighted palette strand — widths are the real colour weights */}
+                <div className="flex h-10 sm:h-12 rounded-lg overflow-hidden">
+                  {MOCK_DNA.palette.map((c) => (
+                    <div
+                      key={c.hex}
+                      style={{
+                        backgroundColor: c.hex,
+                        flexGrow: Math.max(c.weight, 0.05),
+                      }}
+                      title={`${c.name} ${c.hex}`}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {MOCK_DNA.styles.slice(0, 3).map((s) => (
+                    <span
+                      key={s.name}
+                      className="text-[11px] px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 capitalize"
+                    >
+                      {s.name}
+                    </span>
+                  ))}
+                  {MOCK_DNA.techniques.slice(0, 2).map((t) => (
+                    <span
+                      key={t}
+                      className="text-[11px] px-2 py-1 rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <button
+                  onClick={loadDemo}
+                  className="w-full sm:w-auto text-sm font-medium px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors active:scale-[0.99]"
+                >
+                  Open this example →
+                </button>
+              </div>
+          </section>
+        )}
 
         <StyleDNAPanel />
 
@@ -128,21 +183,17 @@ export default function Home() {
           {styleDNA && !generatedOutput && (
             <motion.div
               key="brief-form"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              // The product surfaces themselves never fade in — only the
+              // transition between them animates. A dropped animation frame
+              // must not leave the main workflow invisible.
+              initial={false}
               exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
-              transition={{ duration: 0.3 }}
             >
               <ProjectBriefForm />
             </motion.div>
           )}
           {generatedOutput && (
-            <motion.div
-              key="output-panel"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div key="output-panel" initial={false}>
               <OutputPanel />
             </motion.div>
           )}
