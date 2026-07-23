@@ -229,6 +229,7 @@ export default function UploadZone() {
               className="relative group/thumb"
             >
               <div className="w-16 h-16 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={img.thumbnail}
                   alt={img.name}
