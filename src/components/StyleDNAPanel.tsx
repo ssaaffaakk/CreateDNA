@@ -1,10 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { useState } from "react";
+
+const tagVariant = {
+  initial: { scale: 0, opacity: 0 },
+  animate: { scale: 1, opacity: 1 },
+  exit: { scale: 0.8, opacity: 0 },
+};
 
 export default function StyleDNAPanel() {
   const { styleDNA } = useAppStore();
+  const [copiedHex, setCopiedHex] = useState<string | null>(null);
 
   if (!styleDNA) return null;
 
@@ -14,6 +22,12 @@ export default function StyleDNAPanel() {
       : styleDNA.consistencyScore >= 50
         ? "Versatile"
         : "Eclectic";
+
+  const copyColor = (hex: string) => {
+    navigator.clipboard.writeText(hex);
+    setCopiedHex(hex);
+    setTimeout(() => setCopiedHex(null), 1500);
+  };
 
   return (
     <motion.div
@@ -74,27 +88,35 @@ export default function StyleDNAPanel() {
         <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
           Palette
         </h3>
-        <div className="flex gap-2">
-          {styleDNA.palette.slice(0, 6).map((color) => (
-            <motion.div
-              key={color.hex}
-              className="text-center cursor-pointer group"
-              whileHover={{ scale: 1.1 }}
-              onClick={() => navigator.clipboard.writeText(color.hex)}
-              title={`${color.name} — click to copy`}
-            >
-              <div
-                className="w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm group-hover:shadow-md transition-shadow"
-                style={{ backgroundColor: color.hex }}
-              />
-              <span className="text-[10px] text-zinc-500 mt-1 block font-mono">
-                {color.hex}
-              </span>
-              <span className="text-[9px] text-zinc-400 block truncate max-w-[48px]">
-                {color.name}
-              </span>
-            </motion.div>
-          ))}
+        <div className="flex gap-2 flex-wrap">
+          <AnimatePresence mode="popLayout">
+            {styleDNA.palette.slice(0, 6).map((color, i) => (
+              <motion.div
+                key={color.hex}
+                layout
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="text-center cursor-pointer group"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => copyColor(color.hex)}
+                title={`${color.name} — click to copy`}
+              >
+                <div
+                  className="w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm group-hover:shadow-md transition-shadow"
+                  style={{ backgroundColor: color.hex }}
+                />
+                <span className="text-[10px] text-zinc-500 mt-1 block font-mono">
+                  {copiedHex === color.hex ? "Copied!" : color.hex}
+                </span>
+                <span className="text-[9px] text-zinc-400 block truncate max-w-[48px]">
+                  {color.name}
+                </span>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -135,14 +157,22 @@ export default function StyleDNAPanel() {
             Composition
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            {styleDNA.composition.map((c) => (
-              <span
-                key={c}
-                className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30"
-              >
-                {c}
-              </span>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {styleDNA.composition.map((c, i) => (
+                <motion.span
+                  key={c}
+                  layout
+                  variants={tagVariant}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ delay: i * 0.03 }}
+                  className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100 dark:border-blue-900/30"
+                >
+                  {c}
+                </motion.span>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       )}
@@ -154,14 +184,22 @@ export default function StyleDNAPanel() {
             Mood
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            {styleDNA.mood.map((m) => (
-              <span
-                key={m}
-                className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30"
-              >
-                {m}
-              </span>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {styleDNA.mood.map((m, i) => (
+                <motion.span
+                  key={m}
+                  layout
+                  variants={tagVariant}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ delay: i * 0.03 }}
+                  className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30"
+                >
+                  {m}
+                </motion.span>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
         <div>
@@ -169,14 +207,22 @@ export default function StyleDNAPanel() {
             Techniques
           </h3>
           <div className="flex flex-wrap gap-1.5">
-            {styleDNA.techniques.map((t) => (
-              <span
-                key={t}
-                className="text-xs px-2 py-1 rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
-              >
-                {t}
-              </span>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {styleDNA.techniques.map((t, i) => (
+                <motion.span
+                  key={t}
+                  layout
+                  variants={tagVariant}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ delay: i * 0.03 }}
+                  className="text-xs px-2 py-1 rounded-full bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
+                >
+                  {t}
+                </motion.span>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       </div>
