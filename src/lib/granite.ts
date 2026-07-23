@@ -1,16 +1,26 @@
 import OpenAI from "openai";
 
+function assertEnv(key: string): string {
+  const val = process.env[key];
+  if (!val) throw new Error(`Missing environment variable: ${key}`);
+  return val;
+}
+
 async function getIAMToken(): Promise<string> {
+  const apiKey = assertEnv("WATSONX_API_KEY");
   const res = await fetch("https://iam.cloud.ibm.com/identity/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${process.env.WATSONX_API_KEY}`,
+    body: `grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${apiKey}`,
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`IAM token error ${res.status}: ${text}`);
+    throw new Error(`IAM token exchange failed (${res.status}): ${text}`);
   }
   const data = await res.json();
+  if (!data.access_token) {
+    throw new Error("IAM response missing access_token");
+  }
   return data.access_token;
 }
 
@@ -20,21 +30,19 @@ let tokenExpiry = 0;
 async function getToken(): Promise<string> {
   if (cachedToken && Date.now() < tokenExpiry) return cachedToken;
   cachedToken = await getIAMToken();
-  // IAM tokens last 1 hour; refresh 5 minutes early
   tokenExpiry = Date.now() + 55 * 60 * 1000;
   return cachedToken;
 }
 
 function makeClient(token: string): OpenAI {
-  // watsonx.ai OpenAI-compatible endpoint.
-  // baseURL must be a clean path — query params go in defaultQuery
-  // so the SDK can correctly append /chat/completions to the path.
+  const baseUrl = assertEnv("WATSONX_URL");
+  const projectId = assertEnv("WATSONX_PROJECT_ID");
   return new OpenAI({
-    baseURL: `${process.env.WATSONX_URL}/ml/v1/text`,
+    baseURL: `${baseUrl}/ml/v1/text`,
     apiKey: token,
     defaultQuery: {
       version: "2025-03-01",
-      project_id: process.env.WATSONX_PROJECT_ID,
+      project_id: projectId,
     },
     defaultHeaders: {
       Authorization: `Bearer ${token}`,
@@ -50,7 +58,6 @@ export async function analyzeImage(
   const client = makeClient(token);
 
   const response = await client.chat.completions.create({
-    // watsonx.ai model IDs use the "ibm/" namespace prefix
     model: "ibm/granite-vision-4-1-4b",
     messages: [
       {
