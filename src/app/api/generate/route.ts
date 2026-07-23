@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "@/lib/granite";
 import type { StyleDNA } from "@/lib/style-dna";
 import type { ProjectBrief } from "@/lib/store";
+import { toClientError } from "@/lib/api-error";
 
 export async function POST(req: NextRequest) {
   try {
@@ -40,16 +41,37 @@ export async function POST(req: NextRequest) {
       parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
     } catch {
       return NextResponse.json(
-        { error: "Failed to parse AI response", raw },
-        { status: 500 }
+        { error: "Failed to parse AI response" },
+        { status: 502 }
+      );
+    }
+
+    // OutputPanel maps over palette/moodboard/prompts and the kit is persisted,
+    // so a shape drift here would crash the panel on every reload.
+    const kit = parsed as Record<string, unknown> | null;
+    const isValidKit =
+      kit !== null &&
+      typeof kit === "object" &&
+      typeof kit.brief === "string" &&
+      Array.isArray(kit.palette) &&
+      Array.isArray(kit.moodboard) &&
+      Array.isArray(kit.prompts) &&
+      (kit.prompts as unknown[]).every(
+        (p) =>
+          typeof (p as { tool?: unknown })?.tool === "string" &&
+          typeof (p as { prompt?: unknown })?.prompt === "string"
+      );
+
+    if (!isValidKit) {
+      return NextResponse.json(
+        { error: "AI returned an unexpected format — please retry" },
+        { status: 502 }
       );
     }
 
     return NextResponse.json({ output: parsed });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    const status = message.includes("Missing environment variable") ? 503 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json(...toClientError(error, "Generation failed"));
   }
 }
 
