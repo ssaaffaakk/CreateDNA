@@ -27,8 +27,8 @@ Upload your portfolio → IBM Granite Vision 4.1-4b learns your Creative DNA →
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/<your-username>/CreativeDNA.git
-cd CreativeDNA
+git clone https://github.com/ssaaffaakk/CreateDNA.git
+cd CreateDNA
 npm install
 ```
 
@@ -69,25 +69,6 @@ Open [http://localhost:3000](http://localhost:3000).
 |---|---|
 | Vision | `ibm/granite-vision-4-1-4b` |
 | Text | `ibm/granite-4-1-8b-instruct` |
-
-## Testing the Granite Vision API
-
-Once your `.env.local` is set up with real credentials, test the Vision endpoint directly:
-
-```bash
-curl -s -X POST http://localhost:3000/api/analyze \
-  -H "Content-Type: application/json" \
-  -d "{\"imageBase64\": \"$(base64 -i /path/to/test.jpg | tr -d '\n')\", \"existingDNA\": null}" \
-  | jq .
-```
-
-Expected response shape:
-```json
-{
-  "dna": { "palette": [...], "styles": [...], ... },
-  "analysis": { "palette": [...], "mood": [...], ... }
-}
-```
 
 ## Project structure
 
