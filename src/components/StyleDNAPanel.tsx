@@ -51,30 +51,38 @@ export default function StyleDNAPanel() {
             <div className="text-xs text-zinc-500 uppercase tracking-wider">
               Consistency
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <div className="w-16 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${styleDNA.consistencyScore}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="h-full rounded-full"
-                  style={{
-                    backgroundColor:
-                      styleDNA.consistencyScore >= 70
-                        ? "var(--color-accent)"
-                        : styleDNA.consistencyScore >= 40
-                          ? "#eab308"
-                          : "#6b7280",
-                  }}
-                />
+            {/* Consistency compares pieces against each other, so it only means
+                something once there are at least two. */}
+            {styleDNA.imageCount < 2 ? (
+              <div className="text-xs text-zinc-400 mt-0.5">
+                Add a 2nd piece
               </div>
-              <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400">
-                {styleDNA.consistencyScore}%
-              </span>
-            </div>
+            ) : (
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="w-16 h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${styleDNA.consistencyScore}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full rounded-full"
+                    style={{
+                      backgroundColor:
+                        styleDNA.consistencyScore >= 70
+                          ? "var(--color-accent)"
+                          : styleDNA.consistencyScore >= 40
+                            ? "#eab308"
+                            : "#6b7280",
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-mono text-zinc-600 dark:text-zinc-400">
+                  {styleDNA.consistencyScore}%
+                </span>
+              </div>
+            )}
           </div>
           <span className="text-[10px] text-zinc-500 bg-zinc-200 dark:bg-zinc-800 px-2 py-0.5 rounded-full">
-            {consistencyLabel}
+            {styleDNA.imageCount < 2 ? "New profile" : consistencyLabel}
           </span>
         </div>
       </div>
