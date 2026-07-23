@@ -28,7 +28,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-base font-semibold tracking-tight leading-tight">
-                CreativeDNA
+                CreateDNA
               </h1>
               <p className="text-[11px] text-zinc-500 leading-tight">
                 Powered by IBM Granite

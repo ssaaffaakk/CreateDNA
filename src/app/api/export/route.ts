@@ -60,7 +60,7 @@ ${dna.influences.join(", ")}
 
 ---
 *Last updated: ${dna.updatedAt}*
-*Created with [CreativeDNA](https://github.com/ssaaffaakk/CreateDNA) — Powered by IBM Granite 4.1*`;
+*Created with [CreateDNA](https://github.com/ssaaffaakk/CreateDNA) — Powered by IBM Granite on watsonx.ai*`;
 }
 
 function toSystemPrompt(dna: StyleDNA): string {
@@ -89,5 +89,5 @@ Every output you generate MUST be consistent with this creator's identity:
 - If they use warm palettes, don't default to cool tones
 - Be THEM, not generic
 
-Generated with CreativeDNA — Powered by IBM Granite 4.1`;
+Generated with CreateDNA — Powered by IBM Granite on watsonx.ai`;
 }

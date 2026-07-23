@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CreativeDNA — AI That Knows Your Style",
+  title: "CreateDNA — AI That Knows Your Style",
   description:
-    "Upload your portfolio. AI learns your creative identity — palette, style, mood, techniques — and generates project kits that sound like you. Built with IBM Granite 4.1.",
+    "Upload your portfolio. AI learns your creative identity — palette, style, mood, techniques — and generates project kits that sound like you. Built with IBM Granite on watsonx.ai.",
   keywords: [
     "creative AI",
     "style analysis",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "AI Builders Challenge",
   ],
   openGraph: {
-    title: "CreativeDNA — AI That Knows Your Style",
+    title: "CreateDNA — AI That Knows Your Style",
     description:
       "Upload your portfolio. AI extracts your creative DNA and generates project kits in your style.",
     type: "website",
