@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ output: parsed });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = message.includes("Missing environment variable") ? 503 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
