@@ -121,19 +121,29 @@ export default function Home() {
 
         <StyleDNAPanel />
 
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {styleDNA && !generatedOutput && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              key="brief-form"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
+              transition={{ duration: 0.3 }}
             >
               <ProjectBriefForm />
             </motion.div>
           )}
+          {generatedOutput && (
+            <motion.div
+              key="output-panel"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <OutputPanel />
+            </motion.div>
+          )}
         </AnimatePresence>
-
-        <OutputPanel />
 
         <footer className="text-center text-[11px] text-zinc-400 py-8 border-t border-zinc-100 dark:border-zinc-800/50">
           Built with IBM Granite 4.1 · IBM AI Builders Challenge 2026
