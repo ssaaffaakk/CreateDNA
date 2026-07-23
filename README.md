@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CreativeDNA
 
-## Getting Started
+> AI that knows your style. Built for the IBM AI Builders Challenge 2026.
 
-First, run the development server:
+Upload your portfolio → IBM Granite Vision 4.1-4b learns your Creative DNA → every new project comes pre-loaded with your aesthetic.
+
+## What it does
+
+1. **Upload** — Drop your portfolio images (designs, posters, logos, photos).
+2. **Analyze** — IBM Granite Vision 4.1-4b extracts your color palette, composition style, artistic influences, mood, and techniques from each image.
+3. **Accumulate** — Each upload merges into a growing DNA profile. The more you upload, the better it knows you.
+4. **Brief** — Enter a new project brief (what you're making, platform, audience, constraints).
+5. **Generate** — IBM Granite 4.1-8b-instruct produces a full project kit *in your style*: palette, typography, tone of voice, and ready-to-paste prompts for Midjourney, DALL-E, ChatGPT, and Canva.
+6. **Export** — Download your Creative DNA as JSON, Markdown, or a system prompt to use in any AI tool.
+
+## Tech stack
+
+- **Next.js 16** (App Router, TypeScript)
+- **Tailwind CSS v4**
+- **Zustand 5** — state with localStorage persistence
+- **Framer Motion 12** — transitions and animations
+- **IBM Granite Vision 4.1-4b** — image analysis via watsonx.ai
+- **IBM Granite 4.1-8b-instruct** — text generation via watsonx.ai
+
+## Setup
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/<your-username>/CreativeDNA.git
+cd CreativeDNA
+npm install
+```
+
+### 2. Configure environment variables
+
+Create `.env.local` in the project root:
+
+```env
+# IBM Cloud IAM API key — https://cloud.ibm.com/iam/apikeys
+WATSONX_API_KEY=your_api_key_here
+
+# watsonx.ai project ID — find in your project settings
+WATSONX_PROJECT_ID=your_project_id_here
+
+# watsonx.ai regional endpoint
+WATSONX_URL=https://us-south.ml.cloud.ibm.com
+```
+
+### 3. Run the dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API routes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Method | Description |
+|---|---|---|
+| `/api/analyze` | POST | Accepts `{imageBase64, existingDNA}`, returns updated `StyleDNA` |
+| `/api/generate` | POST | Accepts `{styleDNA, brief}`, returns project kit |
+| `/api/export` | POST | Accepts `{styleDNA, format}`, returns exportable content |
 
-## Learn More
+## Granite model IDs
 
-To learn more about Next.js, take a look at the following resources:
+| Model | ID |
+|---|---|
+| Vision | `ibm/granite-vision-4-1-4b` |
+| Text | `ibm/granite-4-1-8b-instruct` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Testing the Granite Vision API
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Once your `.env.local` is set up with real credentials, test the Vision endpoint directly:
 
-## Deploy on Vercel
+```bash
+curl -s -X POST http://localhost:3000/api/analyze \
+  -H "Content-Type: application/json" \
+  -d "{\"imageBase64\": \"$(base64 -i /path/to/test.jpg | tr -d '\n')\", \"existingDNA\": null}" \
+  | jq .
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Expected response shape:
+```json
+{
+  "dna": { "palette": [...], "styles": [...], ... },
+  "analysis": { "palette": [...], "mood": [...], ... }
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Main page
+│   ├── layout.tsx            # Root layout + metadata
+│   └── api/
+│       ├── analyze/route.ts  # Vision analysis endpoint
+│       ├── generate/route.ts # Project kit generation endpoint
+│       └── export/route.ts   # DNA export endpoint
+├── components/
+│   ├── UploadZone.tsx        # Drag-drop image upload
+│   ├── StyleDNAPanel.tsx     # DNA visualization
+│   ├── ProjectBriefForm.tsx  # New project input
+│   └── OutputPanel.tsx       # Generated kit + export
+└── lib/
+    ├── granite.ts            # watsonx.ai client (IAM token + API calls)
+    ├── store.ts              # Zustand state store
+    └── style-dna.ts          # Types, prompts, merge logic
+```
+
+## License
+
+MIT
