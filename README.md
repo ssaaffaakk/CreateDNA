@@ -1,8 +1,8 @@
-# CreativeDNA
+# CreateDNA
 
 > AI that knows your style. Built for the IBM AI Builders Challenge 2026.
 
-Upload your portfolio → IBM Granite Vision 4.1-4b learns your Creative DNA → every new project comes pre-loaded with your aesthetic.
+Upload your portfolio → watsonx.ai vision learns your Creative DNA → IBM Granite generates every new project pre-loaded with your aesthetic.
 
 ## The Problem
 
@@ -16,7 +16,7 @@ Your creative identity shouldn't reset every time you switch tools.
 
 ## The Solution
 
-CreativeDNA extracts your visual identity from your portfolio and makes it portable across every AI tool:
+CreateDNA extracts your visual identity from your portfolio and makes it portable across every AI tool:
 
 1. **Upload** your portfolio images (designs, posters, logos, photos)
 2. **AI analyzes** each piece — extracting palette, composition, style influences, mood, and techniques
@@ -27,18 +27,18 @@ CreativeDNA extracts your visual identity from your portfolio and makes it porta
 ## How It Works
 
 ```
-Portfolio Images → Granite Vision 4.1-4b → Style DNA Profile
-                                                    ↓
-Project Brief → Granite 4.1-8b-instruct ← Style DNA Context
+Portfolio Images → watsonx.ai Vision → Style DNA Profile
+                                                ↓
+Project Brief → IBM Granite (instruct) ← Style DNA Context
                         ↓
               Project Kit (palette, typography, tone, AI prompts)
                         ↓
               Export → JSON / Markdown / System Prompt → Any AI Tool
 ```
 
-**Granite Vision 4.1-4b** analyzes each uploaded image, extracting color palettes (with actual hex codes), composition patterns, artistic influences, mood keywords, and visual techniques. Each analysis merges into the existing DNA using weighted averaging — the profile evolves with every upload.
+**Vision analysis** runs on watsonx.ai's multimodal endpoint, extracting color palettes (with actual hex codes), composition patterns, artistic influences, mood keywords, and visual techniques from each uploaded image. Each analysis merges into the existing DNA using weighted averaging — the profile evolves with every upload.
 
-**Granite 4.1-8b-instruct** receives the full DNA profile as context when generating project kits. It produces style-consistent recommendations: palette extensions, typography pairings, tone of voice guides, and tool-specific prompts that reference the creator's actual colors, techniques, and influences.
+**IBM Granite** receives the full DNA profile as context when generating project kits. It produces style-consistent recommendations: palette extensions, typography pairings, tone of voice guides, and tool-specific prompts that reference the creator's actual colors, techniques, and influences.
 
 ## Tech Stack
 
@@ -48,9 +48,9 @@ Project Brief → Granite 4.1-8b-instruct ← Style DNA Context
 | Styling | Tailwind CSS v4 |
 | State | Zustand 5 with localStorage persistence |
 | Animations | Framer Motion 12 |
-| Vision AI | IBM Granite Vision 4.1-4b (`ibm/granite-vision-4-1-4b`) |
-| Text AI | IBM Granite 4.1-8b-instruct (`ibm/granite-4-1-8b-instruct`) |
-| AI Transport | watsonx.ai OpenAI-compatible API via `openai` npm package |
+| Text AI | IBM Granite 4 H Small (`ibm/granite-4-h-small`) |
+| Vision AI | Llama 4 Maverick (`meta-llama/llama-4-maverick-17b-128e-instruct-fp8`) |
+| AI Transport | watsonx.ai `/ml/v1/text/chat` REST API |
 
 ## Setup
 
@@ -73,9 +73,11 @@ WATSONX_API_KEY=your_api_key_here
 # watsonx.ai project ID — find in your project settings
 WATSONX_PROJECT_ID=your_project_id_here
 
-# watsonx.ai regional endpoint
-WATSONX_URL=https://us-south.ml.cloud.ibm.com
+# watsonx.ai regional endpoint (must match your WML service region)
+WATSONX_URL=https://eu-de.ml.cloud.ibm.com
 ```
+
+> **Note:** Your WML (Watson Machine Learning) service instance must be associated with your watsonx.ai project, and both must live in the same region as `WATSONX_URL`. Available Granite models differ per region and plan.
 
 ### 3. Run the dev server
 
@@ -93,12 +95,14 @@ Open [http://localhost:3000](http://localhost:3000).
 | `/api/generate` | POST | Accepts `{styleDNA, brief}`, returns project kit |
 | `/api/export` | POST | Accepts `{styleDNA, format}`, returns exportable content |
 
-## Granite Model IDs
+## Model IDs
 
 | Model | ID | Usage |
 |---|---|---|
-| Vision | `ibm/granite-vision-4-1-4b` | Image analysis → style extraction |
-| Text | `ibm/granite-4-1-8b-instruct` | Brief → project kit generation |
+| Text | `ibm/granite-4-h-small` | Brief → project kit generation |
+| Vision | `meta-llama/llama-4-maverick-17b-128e-instruct-fp8` | Image analysis → style extraction |
+
+Both models run on **IBM watsonx.ai**. Model IDs are defined as constants (`TEXT_MODEL`, `VISION_MODEL`) at the top of `src/lib/granite.ts` — swap them there to target different watsonx models.
 
 ## Project Structure
 
@@ -140,11 +144,11 @@ For hackathon judges without API credentials, the app includes a "See a demo" bu
 
 ## Built with IBM watsonx.ai
 
-This project uses IBM Granite foundation models through the watsonx.ai platform. Granite Vision 4.1-4b provides multimodal image understanding, while Granite 4.1-8b-instruct handles text generation with style-aware context.
+This project runs entirely on the IBM watsonx.ai platform. IBM Granite (granite-4-h-small) handles style-aware project kit generation, while watsonx.ai's multimodal endpoint (Llama 4 Maverick) provides image understanding. Authentication uses IBM Cloud IAM token exchange.
 
 ## Built for AI Builders Challenge 2026
 
-CreativeDNA is a submission for the IBM AI Builders Challenge 2026 (theme: "Reimagine Creative Industries with AI"). The challenge: make AI tools understand creative identity, not just follow generic instructions.
+CreateDNA is a submission for the IBM AI Builders Challenge 2026 (theme: "Reimagine Creative Industries with AI"). The challenge: make AI tools understand creative identity, not just follow generic instructions.
 
 ## License
 
