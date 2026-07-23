@@ -11,12 +11,16 @@ function assertEnv(key: string): string {
   return val;
 }
 
+const IAM_TIMEOUT_MS = 10_000;
+const CHAT_TIMEOUT_MS = 90_000;
+
 async function getIAMToken(): Promise<string> {
   const apiKey = assertEnv("WATSONX_API_KEY");
   const res = await fetch("https://iam.cloud.ibm.com/identity/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${apiKey}`,
+    body: `grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey=${encodeURIComponent(apiKey)}`,
+    signal: AbortSignal.timeout(IAM_TIMEOUT_MS),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -44,41 +48,86 @@ interface ChatMessage {
   content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 }
 
+function isTimeout(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (err.name === "TimeoutError" || err.name === "AbortError")
+  );
+}
+
+const MAX_ATTEMPTS = 3;
+
 async function chatCompletion(
   modelId: string,
   messages: ChatMessage[],
   maxTokens: number,
   temperature: number
 ): Promise<string> {
-  const token = await getToken();
   const baseUrl = assertEnv("WATSONX_URL");
   const projectId = assertEnv("WATSONX_PROJECT_ID");
 
-  const res = await fetch(
-    `${baseUrl}/ml/v1/text/chat?version=2025-03-01`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model_id: modelId,
-        project_id: projectId,
-        messages,
-        max_tokens: maxTokens,
-        temperature,
-      }),
-    }
-  );
+  let lastError: Error = new Error("watsonx request failed");
 
-  if (!res.ok) {
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let res: Response;
+    try {
+      const token = await getToken();
+      res = await fetch(`${baseUrl}/ml/v1/text/chat?version=2025-03-01`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model_id: modelId,
+          project_id: projectId,
+          messages,
+          max_tokens: maxTokens,
+          temperature,
+        }),
+        // Without a signal, a stalled upstream call hangs the route forever and
+        // the UI spinner never resolves.
+        signal: AbortSignal.timeout(CHAT_TIMEOUT_MS),
+      });
+    } catch (err) {
+      lastError = isTimeout(err)
+        ? new Error("watsonx request timed out — please retry")
+        : err instanceof Error
+          ? err
+          : new Error(String(err));
+      if (attempt < MAX_ATTEMPTS) {
+        await delay(attempt);
+        continue;
+      }
+      throw lastError;
+    }
+
+    if (res.ok) {
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content ?? "";
+    }
+
     const errText = await res.text();
-    throw new Error(`watsonx API error (${res.status}): ${errText}`);
+
+    // A cached token rejected upstream is unrecoverable until we re-exchange it.
+    if (res.status === 401 || res.status === 403) {
+      cachedToken = null;
+      tokenExpiry = 0;
+    }
+
+    lastError = new Error(`watsonx API error (${res.status}): ${errText}`);
+
+    const retryable = res.status === 429 || res.status >= 500 || res.status === 401;
+    if (!retryable || attempt === MAX_ATTEMPTS) throw lastError;
+
+    await delay(attempt);
   }
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content ?? "";
+  throw lastError;
+}
+
+function delay(attempt: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 500 * 2 ** (attempt - 1)));
 }
 
 export async function analyzeImage(
