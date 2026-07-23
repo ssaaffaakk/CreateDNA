@@ -6,9 +6,15 @@ import StyleDNAPanel from "@/components/StyleDNAPanel";
 import ProjectBriefForm from "@/components/ProjectBriefForm";
 import OutputPanel from "@/components/OutputPanel";
 import { useAppStore } from "@/lib/store";
+import { MOCK_DNA, MOCK_OUTPUT } from "@/lib/mock-data";
 
 export default function Home() {
-  const { styleDNA, generatedOutput, reset, images } = useAppStore();
+  const { styleDNA, generatedOutput, reset, images, setStyleDNA, setGeneratedOutput } = useAppStore();
+
+  const loadDemo = () => {
+    setStyleDNA(MOCK_DNA);
+    setGeneratedOutput(MOCK_OUTPUT);
+  };
 
   const step = !styleDNA ? 0 : !generatedOutput ? 1 : 2;
 
@@ -100,6 +106,13 @@ export default function Home() {
                   Generate in your style
                 </span>
               </div>
+
+              <button
+                onClick={loadDemo}
+                className="mt-4 text-sm text-zinc-400 hover:text-[var(--color-accent)] transition-colors underline underline-offset-4 decoration-zinc-700 hover:decoration-[var(--color-accent)]"
+              >
+                See a demo with sample data
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
