@@ -24,22 +24,28 @@ export default function Home() {
     <MotionConfig reducedMotion="user">
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-sm shadow-sm">
-              D
-            </div>
-            <div>
-              <h1 className="text-base font-semibold tracking-tight leading-tight">
-                CreateDNA
-              </h1>
-              <p className="text-[11px] text-zinc-500 leading-tight">
-                Powered by IBM Granite
-              </p>
-            </div>
+        <div className="relative max-w-3xl mx-auto px-6 py-3 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-base font-semibold tracking-tight leading-tight">
+              Create
+              <span
+                style={{
+                  backgroundImage:
+                    "linear-gradient(90deg, var(--color-accent), #e94560, var(--color-cool))",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                DNA
+              </span>
+            </h1>
+            <p className="text-[11px] text-zinc-500 leading-tight">
+              Powered by IBM Granite
+            </p>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-4">
             {styleDNA && (
               <div className="hidden sm:flex items-center gap-1.5">
                 {[0, 1, 2].map((s) => (
