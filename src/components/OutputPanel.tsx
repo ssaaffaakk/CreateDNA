@@ -107,9 +107,12 @@ export default function OutputPanel() {
             Project palette
           </h3>
           <div className="flex gap-2">
-            {generatedOutput.palette.map((hex) => (
+            {generatedOutput.palette.map((hex, i) => (
               <motion.div
-                key={hex}
+                // Composite key: the generated palette can repeat a hex, which
+                // would collide on a bare `key={hex}`. Safe here — these chips
+                // have no exit/layout animation that needs a stable identity.
+                key={`${hex}-${i}`}
                 className="text-center cursor-pointer"
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}

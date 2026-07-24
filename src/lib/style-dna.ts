@@ -68,12 +68,27 @@ function sanitizeAnalysis(a: Partial<StyleAnalysis> | null | undefined): StyleAn
 
   const src = a ?? {};
 
+  // The model can list the same colour twice. Duplicate hexes render as two
+  // identical swatches and collide on React's `key={color.hex}`, so keep only
+  // the first (most-dominant) occurrence of each.
+  const dedupePalette = (list: ColorEntry[]): ColorEntry[] => {
+    const seen = new Set<string>();
+    return list.filter((c) => {
+      const key = c.hex.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
   return {
-    palette: (Array.isArray(src.palette) ? src.palette : []).filter(
-      (c) =>
-        typeof c?.hex === "string" &&
-        typeof c?.name === "string" &&
-        Number.isFinite(c?.weight)
+    palette: dedupePalette(
+      (Array.isArray(src.palette) ? src.palette : []).filter(
+        (c): c is ColorEntry =>
+          typeof c?.hex === "string" &&
+          typeof c?.name === "string" &&
+          Number.isFinite(c?.weight)
+      )
     ),
     styles: (Array.isArray(src.styles) ? src.styles : []).filter(
       (s) => typeof s?.name === "string" && Number.isFinite(s?.weight)
