@@ -10,8 +10,18 @@ export function toClientError(
   const message = error instanceof Error ? error.message : String(error);
 
   if (message.includes("Missing environment variable")) {
+    console.error("[api]", message);
     return [
       { error: "Server is not configured for AI — missing credentials" },
+      { status: 503 },
+    ];
+  }
+  // A rejected key is a configuration problem, not a transient fault — a
+  // generic "please retry" would send the operator in the wrong direction.
+  if (message.includes("IAM token exchange failed")) {
+    console.error("[api]", message);
+    return [
+      { error: "AI credentials were rejected — check the server's watsonx configuration" },
       { status: 503 },
     ];
   }

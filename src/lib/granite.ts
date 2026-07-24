@@ -95,6 +95,12 @@ async function chatCompletion(
         : err instanceof Error
           ? err
           : new Error(String(err));
+      // A 400/401/403/404 from IAM means the API key itself was rejected —
+      // not a transient fault, so retrying only delays the error. (429 and
+      // 5xx from IAM stay retryable.)
+      if (/IAM token exchange failed \((400|401|403|404)\)/.test(lastError.message)) {
+        throw lastError;
+      }
       if (attempt < MAX_ATTEMPTS) {
         await delay(attempt);
         continue;
