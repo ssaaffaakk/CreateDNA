@@ -92,34 +92,48 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* The three steps, shown as the actual pipeline rather than
-                  prose — step 1 is the upload control directly below. */}
-              <ol className="flex items-stretch justify-center gap-1.5 sm:gap-3 text-left">
-                {[
-                  { n: 1, short: "Upload", label: "Upload work", sub: "2–5 pieces" },
-                  { n: 2, short: "Read DNA", label: "Read the DNA", sub: "palette + style" },
-                  { n: 3, short: "Generate", label: "Generate", sub: "kit + prompts" },
-                ].map((s) => (
-                  <li
-                    key={s.n}
-                    className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 px-2 sm:px-3 py-2"
-                  >
-                    <span className="shrink-0 w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[11px] font-medium text-zinc-500 flex items-center justify-center tabular-nums">
-                      {s.n}
-                    </span>
-                    <span className="min-w-0">
-                      {/* Short labels below sm so nothing truncates on a phone */}
-                      <span className="block text-[12px] sm:text-[13px] font-medium leading-tight">
-                        <span className="sm:hidden">{s.short}</span>
-                        <span className="hidden sm:inline">{s.label}</span>
+              {/* Before-use instructions: what the tool does, in three steps.
+                  Full descriptions stay visible on mobile (stacked) rather than
+                  being truncated. */}
+              <div className="space-y-2.5">
+                <h3 className="text-[11px] uppercase tracking-wider text-zinc-500 text-center">
+                  How it works
+                </h3>
+                <ol className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-left">
+                  {[
+                    {
+                      n: 1,
+                      title: "Upload your work",
+                      desc: "Drop 2–5 pieces. A vision model reads the palette, composition and technique in each.",
+                    },
+                    {
+                      n: 2,
+                      title: "Get your Creative DNA",
+                      desc: "Your style is distilled into structured, machine-readable data — colors, styles, mood, techniques.",
+                    },
+                    {
+                      n: 3,
+                      title: "Generate a project kit",
+                      desc: "Any brief becomes prompts and a system prompt — written the way AI tools understand, in your style.",
+                    },
+                  ].map((s) => (
+                    <li
+                      key={s.n}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-3 space-y-1.5"
+                    >
+                      <span className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[var(--color-accent)] text-xs font-semibold flex items-center justify-center tabular-nums">
+                        {s.n}
                       </span>
-                      <span className="hidden sm:block text-[11px] text-zinc-400 leading-tight truncate">
-                        {s.sub}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
+                      <p className="text-[13px] font-medium leading-tight">
+                        {s.title}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 leading-snug">
+                        {s.desc}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
           </div>
         )}
 
