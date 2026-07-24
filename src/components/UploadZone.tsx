@@ -303,20 +303,27 @@ function fileToBase64(file: File): Promise<string> {
 
     img.onload = () => {
       URL.revokeObjectURL(url);
-      const scale = Math.min(1, MAX_ANALYSIS_EDGE / Math.max(img.width, img.height));
-      const w = Math.max(1, Math.round(img.width * scale));
-      const h = Math.max(1, Math.round(img.height * scale));
+      // Wrap the whole body: any throw here (out-of-memory canvas, a security
+      // error from toDataURL) must reject the promise, never leave it pending —
+      // a stuck promise freezes handleFiles' await and the spinner never clears.
+      try {
+        const scale = Math.min(1, MAX_ANALYSIS_EDGE / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
 
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error(`${file.name}: could not process image`));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+      } catch {
         reject(new Error(`${file.name}: could not process image`));
-        return;
       }
-      ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
     };
 
     img.onerror = () => {
@@ -335,16 +342,29 @@ function createThumbnail(file: File): Promise<string> {
     // the error path the promise never settles and the spinner sticks forever.
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = 128;
-      canvas.height = 128;
-      const ctx = canvas.getContext("2d")!;
-      const size = Math.min(img.width, img.height);
-      const x = (img.width - size) / 2;
-      const y = (img.height - size) / 2;
-      ctx.drawImage(img, x, y, size, size, 0, 0, 128, 128);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.7));
+      // getContext can return null and toDataURL/drawImage can throw. A
+      // non-null assertion here used to let that throw escape the handler,
+      // leaving the promise pending forever and the upload spinner stuck.
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error(`${file.name}: could not process image`));
+          return;
+        }
+        const size = Math.min(img.width, img.height);
+        const x = (img.width - size) / 2;
+        const y = (img.height - size) / 2;
+        ctx.drawImage(img, x, y, size, size, 0, 0, 128, 128);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/jpeg", 0.7));
+      } catch {
+        URL.revokeObjectURL(url);
+        reject(new Error(`${file.name}: could not process image`));
+      }
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
