@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { useState } from "react";
+import { downloadDNAExport, type ExportFormat } from "@/lib/export-dna";
 
 const tagVariant = {
   initial: { scale: 0, opacity: 0 },
@@ -13,6 +14,8 @@ const tagVariant = {
 export default function StyleDNAPanel() {
   const { styleDNA } = useAppStore();
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   if (!styleDNA) return null;
 
@@ -29,6 +32,20 @@ export default function StyleDNAPanel() {
     navigator.clipboard?.writeText(hex).catch(() => {});
     setCopiedHex(hex);
     setTimeout(() => setCopiedHex(null), 1500);
+  };
+
+  // Export the DNA the moment it exists — the "scan → take it out as JSON"
+  // path, so the machine-readable profile is available without generating a kit.
+  const handleExport = async (format: ExportFormat) => {
+    if (!styleDNA) return;
+    setExporting(format);
+    setExportError(null);
+    try {
+      await downloadDNAExport(styleDNA, format);
+    } catch {
+      setExportError("Export failed. Please try again.");
+    }
+    setExporting(null);
   };
 
   return (
@@ -270,6 +287,40 @@ export default function StyleDNAPanel() {
           </p>
         </div>
       )}
+
+      {/* Export the DNA right here — the "scan → take it out as JSON" path, so
+          the machine-readable profile is available without generating a kit. */}
+      <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-1">
+          Export your DNA
+        </h3>
+        <p className="text-[11px] text-zinc-400 mb-3">
+          Download it as machine-readable data — feed it straight to any AI.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          {(
+            [
+              { key: "json", label: "JSON" },
+              { key: "markdown", label: "Style Guide" },
+              { key: "system-prompt", label: "System Prompt" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => handleExport(key)}
+              disabled={exporting !== null}
+              className="flex-1 py-2.5 px-3 text-sm rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all disabled:opacity-50 active:scale-[0.98]"
+            >
+              {exporting === key ? "..." : label}
+            </button>
+          ))}
+        </div>
+        {exportError && (
+          <p role="alert" className="text-sm text-red-500 mt-2">
+            {exportError}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }
