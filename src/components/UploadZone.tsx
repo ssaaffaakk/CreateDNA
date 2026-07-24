@@ -129,7 +129,13 @@ export default function UploadZone() {
           e.preventDefault();
           setDragOver(true);
         }}
-        onDragLeave={() => setDragOver(false)}
+        onDragLeave={(e) => {
+          // Leave events also fire when the cursor crosses onto a child
+          // element; without this check the highlight flickers mid-drag.
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+            setDragOver(false);
+          }
+        }}
         onDrop={(e) => {
           e.preventDefault();
           setDragOver(false);
@@ -315,6 +321,10 @@ function fileToBase64(file: File): Promise<string> {
         reject(new Error(`${file.name}: could not process image`));
         return;
       }
+      // JPEG has no alpha channel — transparent PNG/WebP pixels would flatten
+      // to black and the model would read a black-dominant palette.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
     };
@@ -338,7 +348,16 @@ function createThumbnail(file: File): Promise<string> {
       const canvas = document.createElement("canvas");
       canvas.width = 128;
       canvas.height = 128;
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        reject(new Error(`${file.name}: could not process image`));
+        return;
+      }
+      // Same alpha flattening as fileToBase64 — a transparent logo would
+      // otherwise show up as a black square in the thumbnail strip.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 128, 128);
       const size = Math.min(img.width, img.height);
       const x = (img.width - size) / 2;
       const y = (img.height - size) / 2;
