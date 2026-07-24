@@ -120,6 +120,20 @@
   color: transparent;
 }
 
+/* Brand wordmark — the "DNA" half glows in the accent gradient and breathes.
+   The global reduced-motion rule neutralises the pulse for users who ask. */
+@keyframes brand-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(232, 108, 37, 0.35)); }
+  50% { filter: drop-shadow(0 0 13px rgba(232, 108, 37, 0.6)); }
+}
+.brand-dna {
+  background-image: linear-gradient(120deg, var(--color-accent), var(--color-accent-light));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brand-glow 2.8s ease-in-out infinite;
+}
+
 @keyframes pulse-ring {
   0% { transform: scale(0.8); opacity: 0.5; }
   50% { transform: scale(1); opacity: 0.2; }

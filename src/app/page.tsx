@@ -24,23 +24,13 @@ export default function Home() {
     <MotionConfig reducedMotion="user">
     <div className="min-h-screen app-bg text-zinc-900 dark:text-zinc-100">
       <header className="sticky top-0 z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border-b border-zinc-200/70 dark:border-zinc-800/70">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--color-accent-light)] via-[var(--color-accent)] to-[var(--color-accent-dark)] flex items-center justify-center text-white font-bold text-sm shadow-[var(--shadow-btn)]">
-              D
-            </div>
-            <div>
-              <h1 className="text-base font-semibold tracking-tight leading-tight">
-                CreateDNA
-              </h1>
-              <p className="text-[11px] text-zinc-500 leading-tight">
-                Powered by IBM Granite
-              </p>
-            </div>
-          </div>
+        <div className="max-w-3xl mx-auto px-6 py-3.5 relative flex items-center justify-center">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight leading-none select-none">
+            Create<span className="brand-dna">DNA</span>
+          </h1>
 
-          <div className="flex items-center gap-4">
-            {styleDNA && (
+          {styleDNA && (
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-1.5">
                 {[0, 1, 2].map((s) => (
                   <div
@@ -53,16 +43,14 @@ export default function Home() {
                   />
                 ))}
               </div>
-            )}
-            {styleDNA && (
               <button
                 onClick={reset}
                 className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors px-2 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 Reset
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </header>
 
