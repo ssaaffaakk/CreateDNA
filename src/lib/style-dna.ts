@@ -54,6 +54,18 @@ export type StyleAnalysis = Omit<
   "id" | "createdAt" | "updatedAt" | "imageCount" | "consistencyScore"
 >;
 
+// Accepts "#ABC", "abc123", "#AABBCC"… and returns canonical "#aabbcc", or
+// null for anything that is not a parseable hex colour.
+function normalizeHex(raw: string): string | null {
+  let h = raw.trim().toLowerCase().replace(/^#/, "");
+  if (/^[0-9a-f]{3}$/.test(h)) h = h.split("").map((c) => c + c).join("");
+  return /^[0-9a-f]{6}$/.test(h) ? `#${h}` : null;
+}
+
+// Weights are documented as 0–1 but the model occasionally answers in percent
+// ("weight": 55) — unclamped, that renders as a 5500% style bar.
+const clamp01 = (n: number): number => Math.min(1, Math.max(0, n));
+
 // The vision model can return a partial or mistyped object (a refusal, a missing
 // array, or `"mood": "serene"` instead of a list). Without this, a bad response
 // either throws inside the merge helpers or persists a DNA with undefined arrays
@@ -68,22 +80,55 @@ function sanitizeAnalysis(a: Partial<StyleAnalysis> | null | undefined): StyleAn
 
   const src = a ?? {};
 
+  // Normalize and dedupe by hex: the panel keys swatches on the hex value, so
+  // a palette listing the same colour twice (a common model slip) would mount
+  // duplicate React keys; an unparseable hex would render an empty swatch.
+  const byHex = new Map<string, ColorEntry>();
+  for (const c of Array.isArray(src.palette) ? src.palette : []) {
+    if (
+      typeof c?.hex !== "string" ||
+      typeof c?.name !== "string" ||
+      !Number.isFinite(c?.weight)
+    ) {
+      continue;
+    }
+    const hex = normalizeHex(c.hex);
+    if (!hex) continue;
+    const existing = byHex.get(hex);
+    if (existing) {
+      existing.weight = clamp01(existing.weight + clamp01(c.weight));
+    } else {
+      byHex.set(hex, { hex, name: c.name, weight: clamp01(c.weight) });
+    }
+  }
+
   return {
-    palette: (Array.isArray(src.palette) ? src.palette : []).filter(
-      (c) =>
-        typeof c?.hex === "string" &&
-        typeof c?.name === "string" &&
-        Number.isFinite(c?.weight)
-    ),
-    styles: (Array.isArray(src.styles) ? src.styles : []).filter(
-      (s) => typeof s?.name === "string" && Number.isFinite(s?.weight)
-    ),
+    palette: [...byHex.values()],
+    styles: (Array.isArray(src.styles) ? src.styles : [])
+      .filter((s) => typeof s?.name === "string" && Number.isFinite(s?.weight))
+      .map((s) => ({ name: s.name, weight: clamp01(s.weight) })),
     composition: strArr(src.composition),
     mood: strArr(src.mood),
     techniques: strArr(src.techniques),
     influences: strArr(src.influences),
     summary: typeof src.summary === "string" ? src.summary : "",
   };
+}
+
+// Minimal structural check for a client-supplied StyleDNA: the six arrays every
+// consumer maps over, plus a usable imageCount. Element shapes are deliberately
+// left to the callers that persist or interpolate specific fields.
+export function isUsableStyleDNA(value: unknown): value is StyleDNA {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    (["palette", "composition", "styles", "mood", "techniques", "influences"] as const).every(
+      (k) => Array.isArray(v[k])
+    ) &&
+    typeof v.imageCount === "number" &&
+    Number.isFinite(v.imageCount) &&
+    v.imageCount >= 1
+  );
 }
 
 export function mergeStyleDNA(
@@ -119,7 +164,8 @@ export function mergeStyleDNA(
     mood: mergeUnique(existing.mood, newAnalysis.mood),
     techniques: mergeUnique(existing.techniques, newAnalysis.techniques),
     influences: mergeUnique(existing.influences, newAnalysis.influences),
-    summary: newAnalysis.summary,
+    // A response with a missing summary must not wipe the profile's.
+    summary: newAnalysis.summary || existing.summary,
     consistencyScore: calculateConsistency(mergedStyles),
   };
 }

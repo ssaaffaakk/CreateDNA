@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeImage } from "@/lib/granite";
-import { ANALYSIS_PROMPT, mergeStyleDNA } from "@/lib/style-dna";
+import { ANALYSIS_PROMPT, isUsableStyleDNA, mergeStyleDNA } from "@/lib/style-dna";
 import type { StyleDNA } from "@/lib/style-dna";
 import { toClientError } from "@/lib/api-error";
-import { tooLarge } from "@/lib/request-guard";
+import { tooLarge, clampStrings } from "@/lib/request-guard";
 
 const MAX_BASE64_SIZE = 15 * 1024 * 1024;
+const MAX_DNA_STRING = 500;
+const MAX_IMAGE_COUNT = 10_000;
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,10 +15,8 @@ export async function POST(req: NextRequest) {
     if (oversized) return oversized;
 
     const body = await req.json();
-    const { imageBase64, existingDNA } = body as {
-      imageBase64: string;
-      existingDNA: StyleDNA | null;
-    };
+    const { imageBase64 } = body as { imageBase64: string };
+    const rawExistingDNA = (body as { existingDNA?: unknown }).existingDNA;
 
     // Type check, not just truthiness: a non-string here would otherwise skip
     // the length guard and reach the paid vision call as "[object Object]".
@@ -26,6 +26,25 @@ export async function POST(req: NextRequest) {
 
     if (imageBase64.length > MAX_BASE64_SIZE) {
       return NextResponse.json({ error: "Image too large (max ~10MB)" }, { status: 400 });
+    }
+
+    // existingDNA crosses the same trust boundary as /api/generate's styleDNA:
+    // its summary is interpolated into the vision prompt below and the rest is
+    // merged into the profile, so validate the shape and clamp every string —
+    // otherwise the image-sized body allowance doubles as a prompt allowance.
+    let existingDNA: StyleDNA | null = null;
+    if (rawExistingDNA != null) {
+      if (!isUsableStyleDNA(rawExistingDNA)) {
+        return NextResponse.json(
+          { error: "Invalid or incomplete existingDNA" },
+          { status: 400 }
+        );
+      }
+      const clamped = clampStrings(rawExistingDNA, MAX_DNA_STRING);
+      existingDNA = {
+        ...clamped,
+        imageCount: Math.min(MAX_IMAGE_COUNT, Math.floor(clamped.imageCount)),
+      };
     }
 
     // Ask the model to evolve the profile summary instead of describing only

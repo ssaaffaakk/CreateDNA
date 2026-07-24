@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isUsableStyleDNA } from "@/lib/style-dna";
 import type { StyleDNA } from "@/lib/style-dna";
 import { toClientError } from "@/lib/api-error";
 import { tooLarge } from "@/lib/request-guard";
@@ -18,14 +19,7 @@ export async function POST(req: NextRequest) {
 
     // The formatters map over these arrays; a malformed DNA previously threw
     // and leaked the raw TypeError to the client as a 500.
-    const isUsableDNA =
-      styleDNA !== null &&
-      typeof styleDNA === "object" &&
-      (["palette", "composition", "styles", "mood", "techniques", "influences"] as const).every(
-        (k) => Array.isArray((styleDNA as unknown as Record<string, unknown>)[k])
-      );
-
-    if (!isUsableDNA) {
+    if (!isUsableStyleDNA(styleDNA)) {
       return NextResponse.json(
         { error: "Invalid or incomplete styleDNA" },
         { status: 400 }

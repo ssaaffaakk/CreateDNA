@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText } from "@/lib/granite";
+import { isUsableStyleDNA } from "@/lib/style-dna";
 import type { StyleDNA } from "@/lib/style-dna";
-import type { ProjectBrief } from "@/lib/store";
+import type { GeneratedOutput, ProjectBrief, PromptExport } from "@/lib/store";
 import { toClientError } from "@/lib/api-error";
 import { tooLarge, clampStrings } from "@/lib/request-guard";
 
@@ -14,20 +15,29 @@ export async function POST(req: NextRequest) {
     if (oversized) return oversized;
 
     const body = await req.json();
-    const payload = body as { styleDNA: StyleDNA; brief: ProjectBrief };
+    const rawDNA = (body as { styleDNA?: unknown }).styleDNA;
+    const brief = (body as { brief?: ProjectBrief }).brief;
+
+    if (typeof brief?.description !== "string" || !brief.description) {
+      return NextResponse.json(
+        { error: "Missing brief description" },
+        { status: 400 }
+      );
+    }
+
+    // Without the structural check, garbage here throws inside
+    // buildSystemPrompt and surfaces as a retryable 502 instead of a 400.
+    if (!isUsableStyleDNA(rawDNA)) {
+      return NextResponse.json(
+        { error: "Invalid or incomplete styleDNA" },
+        { status: 400 }
+      );
+    }
 
     // Every styleDNA string is interpolated into the system prompt. The brief
     // is length-checked below, so without this a caller could move an
     // arbitrary prompt into styleDNA.summary and bypass that cap entirely.
-    const styleDNA = clampStrings(payload.styleDNA, MAX_DNA_STRING);
-    const brief = payload.brief;
-
-    if (!styleDNA || typeof brief?.description !== "string" || !brief.description) {
-      return NextResponse.json(
-        { error: "Missing styleDNA or brief description" },
-        { status: 400 }
-      );
-    }
+    const styleDNA: StyleDNA = clampStrings(rawDNA, MAX_DNA_STRING);
 
     const MAX_FIELD_LENGTH = 2000;
     if (brief.description.length > MAX_FIELD_LENGTH ||
@@ -56,30 +66,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // OutputPanel maps over palette/moodboard/prompts and the kit is persisted,
-    // so a shape drift here would crash the panel on every reload.
-    const kit = parsed as Record<string, unknown> | null;
-    const isValidKit =
-      kit !== null &&
-      typeof kit === "object" &&
-      typeof kit.brief === "string" &&
-      Array.isArray(kit.palette) &&
-      Array.isArray(kit.moodboard) &&
-      Array.isArray(kit.prompts) &&
-      (kit.prompts as unknown[]).every(
+    // The kit is rendered as React children and persisted, so element types
+    // matter, not just the arrays: an object in typography/tone crashes the
+    // panel live ("Objects are not valid as a React child"), and a non-string
+    // palette entry passes here only for sanitizeOutput to discard the whole
+    // kit on the next reload. Mirror the store's read-path rules exactly.
+    const isStringArray = (v: unknown): v is string[] =>
+      Array.isArray(v) && v.every((s) => typeof s === "string");
+    const isPromptList = (v: unknown): v is PromptExport[] =>
+      Array.isArray(v) &&
+      v.every(
         (p) =>
           typeof (p as { tool?: unknown })?.tool === "string" &&
           typeof (p as { prompt?: unknown })?.prompt === "string"
       );
 
-    if (!isValidKit) {
+    const kit = parsed as Record<string, unknown> | null;
+    const kitBrief = kit?.brief;
+    const kitPalette = kit?.palette;
+    const kitMoodboard = kit?.moodboard;
+    const kitPrompts = kit?.prompts;
+
+    if (
+      typeof kitBrief !== "string" ||
+      !isStringArray(kitPalette) ||
+      !isStringArray(kitMoodboard) ||
+      !isPromptList(kitPrompts)
+    ) {
       return NextResponse.json(
         { error: "AI returned an unexpected format — please retry" },
         { status: 502 }
       );
     }
 
-    return NextResponse.json({ output: parsed });
+    // Echo only the fields the panel expects — never extra model output.
+    const output: GeneratedOutput = {
+      brief: kitBrief,
+      palette: kitPalette,
+      moodboard: kitMoodboard,
+      typography: typeof kit?.typography === "string" ? kit.typography : "",
+      tone: typeof kit?.tone === "string" ? kit.tone : "",
+      prompts: kitPrompts.map((p) => ({ tool: p.tool, prompt: p.prompt })),
+    };
+
+    return NextResponse.json({ output });
   } catch (error: unknown) {
     return NextResponse.json(...toClientError(error, "Generation failed"));
   }
