@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+
+// Mirrors MAX_FIELD_LENGTH in /api/generate — capping in the input beats
+// letting the user paste 5000 characters and get a 400 after the wait.
+const MAX_FIELD_LENGTH = 2000;
 
 export default function ProjectBriefForm() {
   const { styleDNA, setGeneratedOutput } = useAppStore();
@@ -50,11 +53,11 @@ export default function ProjectBriefForm() {
   const fieldCount = Object.values(brief).filter((v) => v.trim()).length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
-    >
+    // Plain div, not a motion entrance: the brief form is the main workflow
+    // surface after analysis, and product content must be readable even if an
+    // animation frame never runs. The step transition itself is animated by
+    // the AnimatePresence wrapper in page.tsx.
+    <div className="space-y-5 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800">
       <div>
         <h2 className="text-xl font-semibold tracking-tight">New project</h2>
         <p className="text-sm text-zinc-500 mt-1">
@@ -78,6 +81,7 @@ export default function ProjectBriefForm() {
             id="brief-description"
             className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
             rows={3}
+            maxLength={MAX_FIELD_LENGTH}
             placeholder="Instagram campaign for a coffee brand launch, minimalist poster series for a music festival..."
             value={brief.description}
             onChange={(e) =>
@@ -97,6 +101,7 @@ export default function ProjectBriefForm() {
             <input
               id="brief-platform"
               className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
+              maxLength={MAX_FIELD_LENGTH}
               placeholder="Instagram, Print, Web..."
               value={brief.platform}
               onChange={(e) =>
@@ -114,6 +119,7 @@ export default function ProjectBriefForm() {
             <input
               id="brief-audience"
               className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
+              maxLength={MAX_FIELD_LENGTH}
               placeholder="Gen Z, professionals..."
               value={brief.audience}
               onChange={(e) =>
@@ -133,6 +139,7 @@ export default function ProjectBriefForm() {
           <input
             id="brief-constraints"
             className="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/30 focus:border-[var(--color-accent)] transition-all"
+            maxLength={MAX_FIELD_LENGTH}
             placeholder="Budget, timeline, format requirements..."
             value={brief.constraints}
             onChange={(e) =>
@@ -175,6 +182,6 @@ export default function ProjectBriefForm() {
           </button>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
