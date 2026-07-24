@@ -3,9 +3,14 @@ import { analyzeImage } from "@/lib/granite";
 import { ANALYSIS_PROMPT, mergeStyleDNA } from "@/lib/style-dna";
 import type { StyleDNA } from "@/lib/style-dna";
 import { toClientError } from "@/lib/api-error";
-import { tooLarge } from "@/lib/request-guard";
+import { tooLarge, clampStrings } from "@/lib/request-guard";
 
 const MAX_BASE64_SIZE = 15 * 1024 * 1024;
+// existingDNA.summary is interpolated straight into the vision prompt below.
+// The image is size-capped, but without this a caller could smuggle an
+// arbitrary, unbounded prompt through existingDNA — the same hole /api/generate
+// already closes with clampStrings.
+const MAX_DNA_STRING = 500;
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,10 +18,17 @@ export async function POST(req: NextRequest) {
     if (oversized) return oversized;
 
     const body = await req.json();
-    const { imageBase64, existingDNA } = body as {
+    const { imageBase64, existingDNA: rawExistingDNA } = body as {
       imageBase64: string;
       existingDNA: StyleDNA | null;
     };
+
+    // Every existingDNA string reaches the model — via the summary in the
+    // prompt below and via mergeStyleDNA. Clamp before either uses it so an
+    // oversized field cannot bypass the input caps.
+    const existingDNA = rawExistingDNA
+      ? clampStrings(rawExistingDNA, MAX_DNA_STRING)
+      : null;
 
     // Type check, not just truthiness: a non-string here would otherwise skip
     // the length guard and reach the paid vision call as "[object Object]".
