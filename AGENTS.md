@@ -39,18 +39,42 @@ src/
       generate/route.ts  # POST /api/generate — Granite text → project kit
       export/route.ts    # POST /api/export   — JSON / Markdown / system-prompt
   components/
-    UploadZone.tsx        # Drag-drop + click upload, validation, retry, thumbnails
-    StyleDNAPanel.tsx     # Visual display of merged StyleDNA with animated tags/bars
-    ProjectBriefForm.tsx  # Brief input → /api/generate, retry on failure
-    OutputPanel.tsx       # Project kit display + copy buttons + export downloads
+    UploadZone.tsx        # Drag-drop + click upload, pixel palette sampling, thumbnails
+    StyleDNAPanel.tsx     # Merged StyleDNA display + "Export your DNA" (JSON/MD/prompt)
+    ProjectBriefForm.tsx  # Brief input → /api/generate (mocked in demo), "Back to kit"
+    OutputPanel.tsx       # Project kit: brief, palette, type/tone, moodboard, AI prompts
   lib/
     granite.ts            # IAM token cache + fetch-based watsonx chat client
     store.ts              # Zustand store + persisted-schema version/migrate
-    style-dna.ts          # StyleDNA types, ANALYSIS_PROMPT, mergeStyleDNA logic
+    style-dna.ts          # StyleDNA types, ANALYSIS_PROMPT, mergeStyleDNA, weight clamp
+    palette.ts            # Real pixel-colour extraction + hue-based nameColor()
+    export-dna.ts         # Shared downloadDNAExport() used by StyleDNAPanel + OutputPanel
     api-error.ts          # Maps upstream errors to safe client messages
     request-guard.ts      # Body-size rejection + prompt-string clamping
-    mock-data.ts          # Demo mode sample data for judges without API keys
+    mock-data.ts          # Demo mode sample data (DEMO_DNA_ID) for judges without API keys
 ```
+
+## Colour accuracy
+
+Vision models guess hex codes from impression, not by sampling pixels, so their
+palettes drift. `UploadZone` samples the true dominant colours from the canvas
+(`extractDominantColors` in `palette.ts`) and sends `sampledPalette` to
+`/api/analyze`, which validates it and names each colour from the real hue
+(`nameColor`) — the model still supplies composition/styles/mood/techniques.
+
+## Demo mode
+
+The example profile carries a fixed id (`DEMO_DNA_ID`). The app keys off it to:
+show an "Example profile" banner with an Exit control; start a **fresh** profile
+on the first real upload (never merge real work into demo fiction); and mock the
+generate step so keyless judges see a kit instead of a 503.
+
+## Motion / AnimatePresence
+
+The brief↔kit swap is a **plain conditional render**, NOT `AnimatePresence
+mode="wait"`. Gating the kit's appearance on the brief form's *exit* animation
+deadlocks whenever rAF is paused (a backgrounded tab), stranding the workflow —
+the same reason the landing hero avoids AnimatePresence.
 
 ## Persisted state rules
 

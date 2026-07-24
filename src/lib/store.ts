@@ -1,13 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { calculateConsistency } from "./style-dna";
-import type { ColorEntry, StyleDNA, StyleWeight } from "./style-dna";
+import { calculateConsistency, mergeStyleDNA } from "./style-dna";
+import type { ColorEntry, StyleAnalysis, StyleDNA, StyleWeight } from "./style-dna";
 
 export interface PortfolioImage {
   id: string;
   name: string;
   thumbnail: string;
   analyzedAt: string;
+  // The raw per-image analysis, so removing an image can re-derive the DNA
+  // from what remains instead of leaving a stale, over-counted profile.
+  analysis?: StyleAnalysis;
 }
 
 export interface ProjectBrief {
@@ -227,7 +230,22 @@ export const useAppStore = create<AppState>()(
       setStyleDNA: (dna) => set({ styleDNA: dna }),
       addImage: (img) => set((s) => ({ images: [...s.images, img] })),
       removeImage: (id) =>
-        set((s) => ({ images: s.images.filter((i) => i.id !== id) })),
+        set((s) => {
+          const images = s.images.filter((i) => i.id !== id);
+          // Re-derive the DNA from the pieces that remain — but only when every
+          // remaining image carries its analysis (older persisted images may
+          // predate this field). Otherwise leave the DNA untouched rather than
+          // silently dropping contributions we can no longer reconstruct.
+          const analyzed = images.filter((i) => i.analysis);
+          if (images.length === analyzed.length) {
+            const styleDNA = analyzed.reduce<StyleDNA | null>(
+              (dna, img) => mergeStyleDNA(dna, img.analysis as StyleAnalysis),
+              null
+            );
+            return { images, styleDNA };
+          }
+          return { images };
+        }),
       setAnalyzing: (v) => set({ isAnalyzing: v }),
       setError: (msg) => set({ error: msg }),
       setCurrentProject: (p) => set({ currentProject: p }),

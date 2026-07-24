@@ -1,8 +1,12 @@
 import type { StyleDNA } from "./style-dna";
 import type { GeneratedOutput } from "./store";
 
+// The demo profile carries this fixed id so the rest of the app can recognise
+// example data (banner, "start fresh on first real upload", mocked generate).
+export const DEMO_DNA_ID = "demo-dna-001";
+
 export const MOCK_DNA: StyleDNA = {
-  id: "demo-dna-001",
+  id: DEMO_DNA_ID,
   createdAt: "2026-07-20T10:00:00Z",
   updatedAt: "2026-07-23T14:30:00Z",
   imageCount: 4,
@@ -37,7 +41,7 @@ export const MOCK_DNA: StyleDNA = {
     "limited palette",
   ],
   influences: [
-    "Josef Muller-Brockmann",
+    "Josef Müller-Brockmann",
     "Kenya Hara",
     "Massimo Vignelli",
     "Dieter Rams",

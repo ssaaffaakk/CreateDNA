@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { MOCK_OUTPUT, DEMO_DNA_ID } from "@/lib/mock-data";
 
 export default function ProjectBriefForm() {
   const { styleDNA, setGeneratedOutput, setEditingBrief, generatedOutput } = useAppStore();
@@ -21,6 +22,15 @@ export default function ProjectBriefForm() {
 
   const handleGenerate = async () => {
     if (!brief.description.trim()) return;
+
+    // Demo mode has no API keys — show the example kit so judges can see the
+    // whole flow instead of a "missing credentials" error.
+    if (styleDNA.id === DEMO_DNA_ID) {
+      setGeneratedOutput(MOCK_OUTPUT);
+      setEditingBrief(false);
+      return;
+    }
+
     setLoading(true);
     setGenError(null);
     try {
@@ -36,6 +46,9 @@ export default function ProjectBriefForm() {
       }
 
       const data = await res.json();
+      // If the store was reset mid-generate, styleDNA is gone — don't resurrect
+      // a zombie kit onto the landing page.
+      if (!useAppStore.getState().styleDNA) return;
       if (data.output) {
         setGeneratedOutput(data.output);
         // Leave brief-editing mode so the freshly generated kit is shown.
@@ -53,7 +66,11 @@ export default function ProjectBriefForm() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      // Product content must read on first paint (project motion rule): start
+      // AT the animate state via initial={false} rather than fading in from
+      // opacity 0. A valid animate target must stay, though — without it the
+      // parent AnimatePresence(mode="wait") deadlocks and never swaps panels.
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-5 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
     >

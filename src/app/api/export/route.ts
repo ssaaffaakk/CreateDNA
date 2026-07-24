@@ -92,7 +92,8 @@ ${dna.summary}
 
 - Dominant colors: ${dna.palette.slice(0, 5).map((c) => `${c.name} (${c.hex})`).join(", ")}
 - Composition style: ${dna.composition.join(", ")}
-- Artistic influences: ${dna.styles.map((s) => `${s.name} (${Math.round(s.weight * 100)}%)`).join(", ")}
+- Style movements: ${dna.styles.map((s) => `${s.name} (${Math.round(s.weight * 100)}%)`).join(", ")}
+- Artistic influences: ${dna.influences.join(", ")}
 - Mood/tone: ${dna.mood.join(", ")}
 - Techniques: ${dna.techniques.join(", ")}
 - Style consistency: ${dna.consistencyScore}%

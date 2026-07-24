@@ -1,15 +1,21 @@
 "use client";
 
-import { motion, AnimatePresence, MotionConfig } from "framer-motion";
+import { MotionConfig } from "framer-motion";
 import UploadZone from "@/components/UploadZone";
 import StyleDNAPanel from "@/components/StyleDNAPanel";
 import ProjectBriefForm from "@/components/ProjectBriefForm";
 import OutputPanel from "@/components/OutputPanel";
+import { useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { MOCK_DNA, MOCK_OUTPUT } from "@/lib/mock-data";
 
 export default function Home() {
   const { styleDNA, generatedOutput, reset, images, setStyleDNA, setGeneratedOutput, isEditingBrief } = useAppStore();
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  // The example profile carries a fixed id; recognise it so it can be clearly
+  // labelled and never mistaken for the user's own data.
+  const isDemo = styleDNA?.id === MOCK_DNA.id;
 
   const loadDemo = () => {
     setStyleDNA(MOCK_DNA);
@@ -64,10 +70,23 @@ export default function Home() {
             )}
             {styleDNA && (
               <button
-                onClick={reset}
-                className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors px-2 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                onClick={() => {
+                  if (confirmReset) {
+                    reset();
+                    setConfirmReset(false);
+                  } else {
+                    // Two-step so one stray click can't wipe a real profile.
+                    setConfirmReset(true);
+                    setTimeout(() => setConfirmReset(false), 3000);
+                  }
+                }}
+                className={`text-xs transition-colors px-2 py-1 rounded-lg ${
+                  confirmReset
+                    ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 font-medium"
+                    : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                }`}
               >
-                Reset
+                {confirmReset ? "Confirm?" : "Reset"}
               </button>
             )}
           </div>
@@ -75,6 +94,24 @@ export default function Home() {
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-8 space-y-8">
+        {/* Demo banner: the example must never masquerade as the user's data. */}
+        {isDemo && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-950/20 px-4 py-2.5">
+            <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
+              <span className="font-semibold text-[var(--color-accent)]">
+                Example profile
+              </span>{" "}
+              — sample data, not yours. Upload your own work to start a real one.
+            </p>
+            <button
+              onClick={reset}
+              className="shrink-0 self-start sm:self-auto text-xs font-medium px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors"
+            >
+              Exit example
+            </button>
+          </div>
+        )}
+
         {/* Landing hero — only when no DNA. Plain conditional render, not
             AnimatePresence: whether the landing disappears must not depend on
             an exit animation completing. */}
@@ -201,25 +238,13 @@ export default function Home() {
 
         <StyleDNAPanel />
 
-        <AnimatePresence mode="wait">
-          {styleDNA && (!generatedOutput || isEditingBrief) && (
-            <motion.div
-              key="brief-form"
-              // The product surfaces themselves never fade in — only the
-              // transition between them animates. A dropped animation frame
-              // must not leave the main workflow invisible.
-              initial={false}
-              exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
-            >
-              <ProjectBriefForm />
-            </motion.div>
-          )}
-          {generatedOutput && !isEditingBrief && (
-            <motion.div key="output-panel" initial={false}>
-              <OutputPanel />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Plain conditional render (like the landing hero), NOT AnimatePresence
+            mode="wait": gating the output panel on the brief form's EXIT
+            animation deadlocks whenever rAF is paused (a backgrounded tab),
+            leaving the workflow stuck. The panels use initial={false} internally,
+            so they appear instantly. */}
+        {styleDNA && (!generatedOutput || isEditingBrief) && <ProjectBriefForm />}
+        {generatedOutput && !isEditingBrief && <OutputPanel />}
 
         <footer className="text-center text-[11px] text-zinc-400 py-8 border-t border-zinc-100 dark:border-zinc-800/50">
           Built with IBM Granite on watsonx.ai · IBM AI Builders Challenge 2026

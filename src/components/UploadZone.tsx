@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { extractDominantColors } from "@/lib/palette";
+import { DEMO_DNA_ID } from "@/lib/mock-data";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -13,9 +14,11 @@ export default function UploadZone() {
     isAnalyzing,
     setAnalyzing,
     setStyleDNA,
+    setGeneratedOutput,
     addImage,
     removeImage,
     images,
+    styleDNA,
     error,
     setError,
   } = useAppStore();
@@ -34,8 +37,12 @@ export default function UploadZone() {
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
       // Overlapping runs would both merge into the same pre-drop DNA and the
-      // first one to finish would hide the spinner for the other.
-      if (useAppStore.getState().isAnalyzing) return;
+      // first one to finish would hide the spinner for the other. Tell the user
+      // why the drop was ignored instead of swallowing it silently.
+      if (useAppStore.getState().isAnalyzing) {
+        setError("Still reading your last upload — give it a moment, then try again.");
+        return;
+      }
 
       setError(null);
 
@@ -63,6 +70,12 @@ export default function UploadZone() {
           const { base64, palette } = await processImage(file);
           const thumbnail = await createThumbnail(file);
 
+          // Read fresh each file: merge into the DNA the previous file produced.
+          const current = useAppStore.getState().styleDNA;
+          // The first real upload while the example is loaded starts a fresh
+          // profile — never merge the user's work into demo fiction.
+          const fromDemo = current?.id === DEMO_DNA_ID;
+
           const res = await fetch("/api/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -71,9 +84,7 @@ export default function UploadZone() {
               // Real pixel-sampled colors — the model guesses hex codes, so we
               // send the true palette and let the server use it instead.
               sampledPalette: palette,
-              // Read fresh: each file must merge into the DNA the previous
-              // file produced, not the one captured when the batch started.
-              existingDNA: useAppStore.getState().styleDNA,
+              existingDNA: fromDemo ? null : current,
             }),
           });
 
@@ -86,13 +97,20 @@ export default function UploadZone() {
 
           const data = await res.json();
 
+          // If the store was reset mid-flight, isAnalyzing is now false — drop
+          // this stale result instead of resurrecting the deleted profile.
+          if (!useAppStore.getState().isAnalyzing) return;
+
           if (data.dna) {
             setStyleDNA(data.dna);
+            // Shed the example kit the first time real work replaces the demo.
+            if (fromDemo) setGeneratedOutput(null);
             addImage({
               id: crypto.randomUUID(),
               name: file.name,
               thumbnail,
               analyzedAt: new Date().toISOString(),
+              analysis: data.analysis,
             });
           }
         } catch (err) {
@@ -107,7 +125,7 @@ export default function UploadZone() {
       setAnalyzing(false);
       setProgress("");
     },
-    [setAnalyzing, setStyleDNA, addImage, setError]
+    [setAnalyzing, setStyleDNA, setGeneratedOutput, addImage, setError]
   );
 
   const openFilePicker = useCallback(() => {
@@ -170,7 +188,7 @@ export default function UploadZone() {
                   style={{ animationDirection: "reverse", animationDuration: "0.8s" }}
                 />
               </div>
-              <p className="text-sm text-zinc-500 font-medium" role="status" aria-live="polite">
+              <p className="text-sm text-zinc-500 font-medium">
                 {progress}
               </p>
             </motion.div>
@@ -200,12 +218,14 @@ export default function UploadZone() {
               </div>
               <div>
                 <p className="text-[15px] sm:text-base font-medium text-zinc-700 dark:text-zinc-300">
-                  {images.length === 0
-                    ? "Drop 2–5 pieces of your work"
-                    : "Add more work"}
+                  {styleDNA && images.length === 0
+                    ? "Upload your own work to begin"
+                    : images.length === 0
+                      ? "Drop 2–5 pieces of your work"
+                      : "Add more work"}
                 </p>
-                <p className="text-[13px] sm:text-sm text-zinc-400 mt-1">
-                  <span className="sm:hidden">Tap to choose · JPG, PNG, WebP</span>
+                <p className="text-[13px] sm:text-sm text-zinc-500 mt-1">
+                  <span className="sm:hidden">Tap to choose · JPG, PNG, WebP, GIF</span>
                   <span className="hidden sm:inline">
                     or click to browse · JPG, PNG, WebP, GIF up to 10MB
                   </span>
@@ -215,6 +235,12 @@ export default function UploadZone() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Progress announced outside the role="button" dropzone, whose children
+          are presentational to assistive tech. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {isAnalyzing ? progress : ""}
+      </p>
 
       <AnimatePresence>
         {error && (
@@ -280,7 +306,8 @@ export default function UploadZone() {
                   removeImage(img.id);
                 }}
                 aria-label={`Remove ${img.name}`}
-                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800 text-[10px] flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 focus-visible:opacity-100 transition-opacity"
+                // Always visible on touch (no hover); hover-revealed from sm up.
+                className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-800 text-xs flex items-center justify-center opacity-100 sm:opacity-0 sm:group-hover/thumb:opacity-100 focus-visible:opacity-100 transition-opacity"
               >
                 <span aria-hidden="true">x</span>
               </button>

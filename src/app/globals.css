@@ -6,32 +6,9 @@
   --color-accent: #e86c25;
   --color-accent-light: #f4a261;
   --color-accent-dark: #c24d0a;
-  /* Cool counterpart so the UI is not a single-hue orange wash. Used for the
-     analysis/measurement side of the product (DNA strand, data readouts). */
+  /* Cool counterpart so the UI is not a single-hue orange wash — used in the
+     header wordmark gradient. */
   --color-cool: #3d9aa1;
-  --color-cool-light: #6fc0c6;
-}
-
-@keyframes pulse-ring {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  50% { transform: scale(1); opacity: 0.2; }
-  100% { transform: scale(0.8); opacity: 0.5; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 25%,
-    rgba(232, 108, 37, 0.08) 50%,
-    transparent 75%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
 }
 
 .dna-helix {

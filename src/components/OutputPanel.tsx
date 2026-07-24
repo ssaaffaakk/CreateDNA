@@ -81,14 +81,23 @@ export default function OutputPanel() {
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
             Project palette
           </h3>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {generatedOutput.palette.map((hex) => (
               <motion.div
                 key={hex}
-                className="text-center cursor-pointer"
+                className="text-center cursor-pointer rounded-xl"
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.95 }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Copy ${hex}`}
                 onClick={() => copyHex(hex)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    copyHex(hex);
+                  }
+                }}
               >
                 <div
                   className="w-14 h-14 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow"
@@ -126,6 +135,25 @@ export default function OutputPanel() {
           </div>
         )}
       </motion.div>
+
+      {/* Moodboard */}
+      {generatedOutput.moodboard && generatedOutput.moodboard.length > 0 && (
+        <motion.div variants={fadeUp}>
+          <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
+            Moodboard
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {generatedOutput.moodboard.map((m) => (
+              <span
+                key={m}
+                className="text-xs px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 capitalize"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* AI Prompts */}
       {generatedOutput.prompts && generatedOutput.prompts.length > 0 && (

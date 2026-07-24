@@ -59,12 +59,17 @@ export async function POST(req: NextRequest) {
     // OutputPanel maps over palette/moodboard/prompts and the kit is persisted,
     // so a shape drift here would crash the panel on every reload.
     const kit = parsed as Record<string, unknown> | null;
+    const allStrings = (v: unknown): boolean =>
+      Array.isArray(v) && v.every((x) => typeof x === "string");
     const isValidKit =
       kit !== null &&
       typeof kit === "object" &&
       typeof kit.brief === "string" &&
-      Array.isArray(kit.palette) &&
-      Array.isArray(kit.moodboard) &&
+      // Items must be strings, not just arrays: OutputPanel renders palette hex
+      // as backgroundColor and moodboard entries as text — an object here would
+      // crash the panel at render time.
+      allStrings(kit.palette) &&
+      allStrings(kit.moodboard) &&
       Array.isArray(kit.prompts) &&
       (kit.prompts as unknown[]).every(
         (p) =>

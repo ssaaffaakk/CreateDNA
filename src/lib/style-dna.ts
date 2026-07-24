@@ -68,16 +68,22 @@ function sanitizeAnalysis(a: Partial<StyleAnalysis> | null | undefined): StyleAn
 
   const src = a ?? {};
 
+  // Weights drive bar widths and palette merge math, so clamp to [0,1] — a
+  // stray 5 or -1 from the model would otherwise overflow a bar or skew a merge.
+  const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+
   return {
-    palette: (Array.isArray(src.palette) ? src.palette : []).filter(
-      (c) =>
-        typeof c?.hex === "string" &&
-        typeof c?.name === "string" &&
-        Number.isFinite(c?.weight)
-    ),
-    styles: (Array.isArray(src.styles) ? src.styles : []).filter(
-      (s) => typeof s?.name === "string" && Number.isFinite(s?.weight)
-    ),
+    palette: (Array.isArray(src.palette) ? src.palette : [])
+      .filter(
+        (c) =>
+          typeof c?.hex === "string" &&
+          typeof c?.name === "string" &&
+          Number.isFinite(c?.weight)
+      )
+      .map((c) => ({ ...c, weight: clamp01(c.weight) })),
+    styles: (Array.isArray(src.styles) ? src.styles : [])
+      .filter((s) => typeof s?.name === "string" && Number.isFinite(s?.weight))
+      .map((s) => ({ ...s, weight: clamp01(s.weight) })),
     composition: strArr(src.composition),
     mood: strArr(src.mood),
     techniques: strArr(src.techniques),

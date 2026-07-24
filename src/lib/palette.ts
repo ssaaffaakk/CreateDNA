@@ -119,6 +119,9 @@ export function nameColor(hex: string): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return "Color";
   const [h, s, l] = rgbToHsl(rgb[0], rgb[1], rgb[2]);
+  // Chroma (max-min), not HSL saturation: light tints have inflated HSL
+  // saturation, so a cream reads as s≈0.5 while its chroma stays low.
+  const chroma = (Math.max(...rgb) - Math.min(...rgb)) / 255;
 
   if (s < 0.1) {
     if (l < 0.15) return "Near Black";
@@ -126,6 +129,12 @@ export function nameColor(hex: string): string {
     if (l < 0.6) return "Gray";
     if (l < 0.85) return "Silver";
     return "White";
+  }
+
+  // Very light, low-chroma tones are cream/off-white in practice, not "Light
+  // Amber/Orange" — warm hues read as cream, cool hues as off-white.
+  if (l > 0.82 && chroma < 0.16) {
+    return h >= 20 && h < 95 ? "Cream" : "Off White";
   }
 
   const hue =

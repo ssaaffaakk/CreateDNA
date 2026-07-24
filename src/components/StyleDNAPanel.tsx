@@ -111,6 +111,7 @@ export default function StyleDNAPanel() {
       </p>
 
       {/* Color Palette */}
+      {styleDNA.palette.length > 0 && (
       <div>
         <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
           Palette
@@ -147,7 +148,7 @@ export default function StyleDNAPanel() {
                 <span className="text-[10px] text-zinc-500 mt-1 block font-mono">
                   {copiedHex === color.hex ? "Copied!" : color.hex}
                 </span>
-                <span className="text-[9px] text-zinc-400 block truncate max-w-[48px]">
+                <span className="text-[9px] text-zinc-500 dark:text-zinc-400 block truncate max-w-[48px]">
                   {color.name}
                 </span>
               </motion.div>
@@ -155,8 +156,10 @@ export default function StyleDNAPanel() {
           </AnimatePresence>
         </div>
       </div>
+      )}
 
       {/* Style Weights */}
+      {styleDNA.styles.length > 0 && (
       <div>
         <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
           Style Profile
@@ -198,6 +201,7 @@ export default function StyleDNAPanel() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Composition */}
       {styleDNA.composition.length > 0 && (
@@ -227,7 +231,9 @@ export default function StyleDNAPanel() {
       )}
 
       {/* Mood & Techniques */}
+      {(styleDNA.mood.length > 0 || styleDNA.techniques.length > 0) && (
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {styleDNA.mood.length > 0 && (
         <div>
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
             Mood
@@ -251,6 +257,8 @@ export default function StyleDNAPanel() {
             </AnimatePresence>
           </div>
         </div>
+        )}
+        {styleDNA.techniques.length > 0 && (
         <div>
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
             Techniques
@@ -274,7 +282,9 @@ export default function StyleDNAPanel() {
             </AnimatePresence>
           </div>
         </div>
+        )}
       </div>
+      )}
 
       {/* Influences */}
       {styleDNA.influences.length > 0 && (

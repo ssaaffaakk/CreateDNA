@@ -1,5 +1,9 @@
 "use client";
 
+// global-error replaces the root layout when active, so the layout's stylesheet
+// no longer applies — import it here or the recovery screen renders unstyled.
+import "./globals.css";
+
 /**
  * Last-resort recovery. The store rehydrates from localStorage before render,
  * so a bad blob that still slips past sanitizePersisted would otherwise throw
