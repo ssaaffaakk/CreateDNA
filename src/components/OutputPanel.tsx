@@ -5,21 +5,26 @@ import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 
 export default function OutputPanel() {
-  const { generatedOutput, styleDNA } = useAppStore();
+  const { generatedOutput, styleDNA, setGeneratedOutput } = useAppStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
   const [exporting, setExporting] = useState<string | null>(null);
+  // Local, not the shared store error — an export failure belongs next to the
+  // export buttons, not in the upload zone's banner at the top of the page.
+  const [exportError, setExportError] = useState<string | null>(null);
 
   if (!generatedOutput) return null;
 
+  // clipboard is absent on insecure (non-HTTPS) origins; guard so a copy click
+  // degrades to a no-op instead of throwing an unhandled error.
   const copyToClipboard = (text: string, index: number) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard?.writeText(text).catch(() => {});
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   const copyHex = (hex: string) => {
-    navigator.clipboard.writeText(hex);
+    navigator.clipboard?.writeText(hex).catch(() => {});
     setCopiedHex(hex);
     setTimeout(() => setCopiedHex(null), 1500);
   };
@@ -28,6 +33,7 @@ export default function OutputPanel() {
     format: "json" | "markdown" | "system-prompt"
   ) => {
     setExporting(format);
+    setExportError(null);
     try {
       const res = await fetch("/api/export", {
         method: "POST",
@@ -56,7 +62,7 @@ export default function OutputPanel() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      useAppStore.getState().setError("Export failed. Please try again.");
+      setExportError("Export failed. Please try again.");
     }
     setExporting(null);
   };
@@ -81,13 +87,24 @@ export default function OutputPanel() {
       variants={stagger}
       className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
     >
-      <motion.div variants={fadeUp}>
-        <h2 className="text-xl font-semibold tracking-tight">
-          Your project kit
-        </h2>
-        <p className="text-xs text-zinc-500 mt-0.5">
-          Generated from your Creative DNA
-        </p>
+      <motion.div variants={fadeUp} className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Your project kit
+          </h2>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Generated from your Creative DNA
+          </p>
+        </div>
+        {/* Start a new brief without wiping the DNA. Reset clears the whole
+            profile, which is too destructive when the product's value is
+            reusing one creative identity across many projects. */}
+        <button
+          onClick={() => setGeneratedOutput(null)}
+          className="shrink-0 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-[var(--color-accent)] px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] transition-colors active:scale-[0.98]"
+        >
+          + New project
+        </button>
       </motion.div>
 
       {/* Rewritten Brief */}
@@ -208,6 +225,11 @@ export default function OutputPanel() {
             </button>
           ))}
         </div>
+        {exportError && (
+          <p role="alert" className="text-sm text-red-500 mt-2">
+            {exportError}
+          </p>
+        )}
       </motion.div>
     </motion.div>
   );

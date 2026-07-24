@@ -23,8 +23,10 @@ export default function StyleDNAPanel() {
         ? "Versatile"
         : "Eclectic";
 
+  // clipboard is absent on insecure (non-HTTPS) origins; guard so a copy click
+  // degrades to a no-op instead of throwing an unhandled error.
   const copyColor = (hex: string) => {
-    navigator.clipboard.writeText(hex);
+    navigator.clipboard?.writeText(hex).catch(() => {});
     setCopiedHex(hex);
     setTimeout(() => setCopiedHex(null), 1500);
   };
