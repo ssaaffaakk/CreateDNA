@@ -9,14 +9,16 @@ import { useAppStore } from "@/lib/store";
 import { MOCK_DNA, MOCK_OUTPUT } from "@/lib/mock-data";
 
 export default function Home() {
-  const { styleDNA, generatedOutput, reset, images, setStyleDNA, setGeneratedOutput } = useAppStore();
+  const { styleDNA, generatedOutput, reset, images, setStyleDNA, setGeneratedOutput, isEditingBrief } = useAppStore();
 
   const loadDemo = () => {
     setStyleDNA(MOCK_DNA);
     setGeneratedOutput(MOCK_OUTPUT);
   };
 
-  const step = !styleDNA ? 0 : !generatedOutput ? 1 : 2;
+  // While editing a brief, a kit may still exist (the user is starting another
+  // project) — treat that as the generate step, not the finished step.
+  const step = !styleDNA ? 0 : !generatedOutput || isEditingBrief ? 1 : 2;
 
   return (
     // The globals.css reduced-motion rule only covers CSS animations; Framer
@@ -200,7 +202,7 @@ export default function Home() {
         <StyleDNAPanel />
 
         <AnimatePresence mode="wait">
-          {styleDNA && !generatedOutput && (
+          {styleDNA && (!generatedOutput || isEditingBrief) && (
             <motion.div
               key="brief-form"
               // The product surfaces themselves never fade in — only the
@@ -212,7 +214,7 @@ export default function Home() {
               <ProjectBriefForm />
             </motion.div>
           )}
-          {generatedOutput && (
+          {generatedOutput && !isEditingBrief && (
             <motion.div key="output-panel" initial={false}>
               <OutputPanel />
             </motion.div>

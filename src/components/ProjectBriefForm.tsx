@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 
 export default function ProjectBriefForm() {
-  const { styleDNA, setGeneratedOutput } = useAppStore();
+  const { styleDNA, setGeneratedOutput, setEditingBrief, generatedOutput } = useAppStore();
   const [loading, setLoading] = useState(false);
   // Local, not the shared store error — otherwise an upload error elsewhere
   // renders "Generation failed" here and offers a spurious retry.
@@ -38,6 +38,8 @@ export default function ProjectBriefForm() {
       const data = await res.json();
       if (data.output) {
         setGeneratedOutput(data.output);
+        // Leave brief-editing mode so the freshly generated kit is shown.
+        setEditingBrief(false);
       }
     } catch (err) {
       setGenError(
@@ -55,15 +57,27 @@ export default function ProjectBriefForm() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-5 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
     >
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">New project</h2>
-        <p className="text-sm text-zinc-500 mt-1">
-          Describe your project. AI generates everything in{" "}
-          <span className="text-[var(--color-accent)] font-medium">
-            your style
-          </span>
-          .
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">New project</h2>
+          <p className="text-sm text-zinc-500 mt-1">
+            Describe your project. AI generates everything in{" "}
+            <span className="text-[var(--color-accent)] font-medium">
+              your style
+            </span>
+            .
+          </p>
+        </div>
+        {/* A kit already exists (the user clicked "New project" to start
+            another) — offer a direct way back to it so nothing is lost. */}
+        {generatedOutput && (
+          <button
+            onClick={() => setEditingBrief(false)}
+            className="shrink-0 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-[var(--color-accent)] px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] transition-colors active:scale-[0.98]"
+          >
+            ← Back to kit
+          </button>
+        )}
       </div>
 
       <div className="space-y-3">

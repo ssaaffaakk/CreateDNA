@@ -5,13 +5,9 @@ import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 
 export default function OutputPanel() {
-  const { generatedOutput, styleDNA, setGeneratedOutput } = useAppStore();
+  const { generatedOutput, setEditingBrief } = useAppStore();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedHex, setCopiedHex] = useState<string | null>(null);
-  const [exporting, setExporting] = useState<string | null>(null);
-  // Local, not the shared store error — an export failure belongs next to the
-  // export buttons, not in the upload zone's banner at the top of the page.
-  const [exportError, setExportError] = useState<string | null>(null);
 
   if (!generatedOutput) return null;
 
@@ -27,44 +23,6 @@ export default function OutputPanel() {
     navigator.clipboard?.writeText(hex).catch(() => {});
     setCopiedHex(hex);
     setTimeout(() => setCopiedHex(null), 1500);
-  };
-
-  const handleExport = async (
-    format: "json" | "markdown" | "system-prompt"
-  ) => {
-    setExporting(format);
-    setExportError(null);
-    try {
-      const res = await fetch("/api/export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ styleDNA, format }),
-      });
-      const data = await res.json();
-      // Without this, a failed export downloads a file whose entire contents
-      // are the literal text "undefined".
-      if (!res.ok || data.export === undefined) {
-        throw new Error(data.error || "Export failed");
-      }
-
-      const content =
-        typeof data.export === "string"
-          ? data.export
-          : JSON.stringify(data.export, null, 2);
-
-      const ext =
-        format === "json" ? "json" : format === "markdown" ? "md" : "txt";
-      const blob = new Blob([content], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `creative-dna.${ext}`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      setExportError("Export failed. Please try again.");
-    }
-    setExporting(null);
   };
 
   const stagger = {
@@ -96,11 +54,11 @@ export default function OutputPanel() {
             Generated from your Creative DNA
           </p>
         </div>
-        {/* Start a new brief without wiping the DNA. Reset clears the whole
-            profile, which is too destructive when the product's value is
-            reusing one creative identity across many projects. */}
+        {/* Start another brief while KEEPING this kit — it sets a view flag
+            instead of clearing the output, and the brief form offers a
+            "Back to kit" button, so the generated kit is never lost. */}
         <button
-          onClick={() => setGeneratedOutput(null)}
+          onClick={() => setEditingBrief(true)}
           className="shrink-0 text-xs font-medium text-zinc-600 dark:text-zinc-300 hover:text-[var(--color-accent)] px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] transition-colors active:scale-[0.98]"
         >
           + New project
@@ -202,35 +160,6 @@ export default function OutputPanel() {
         </motion.div>
       )}
 
-      {/* Export */}
-      <motion.div variants={fadeUp}>
-        <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-3">
-          Export your Creative DNA
-        </h3>
-        <div className="flex flex-col sm:flex-row gap-2">
-          {(
-            [
-              { key: "json", label: "JSON" },
-              { key: "markdown", label: "Style Guide" },
-              { key: "system-prompt", label: "System Prompt" },
-            ] as const
-          ).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => handleExport(key)}
-              disabled={exporting !== null}
-              className="flex-1 py-2.5 px-3 text-sm rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all disabled:opacity-50 active:scale-[0.98]"
-            >
-              {exporting === key ? "..." : label}
-            </button>
-          ))}
-        </div>
-        {exportError && (
-          <p role="alert" className="text-sm text-red-500 mt-2">
-            {exportError}
-          </p>
-        )}
-      </motion.div>
     </motion.div>
   );
 }

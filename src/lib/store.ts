@@ -38,6 +38,9 @@ interface AppState {
   error: string | null;
   currentProject: ProjectBrief | null;
   generatedOutput: GeneratedOutput | null;
+  // Transient view flag: show the brief form even when a kit already exists, so
+  // "New project" can return to the existing kit instead of destroying it.
+  isEditingBrief: boolean;
 
   setStyleDNA: (dna: StyleDNA) => void;
   addImage: (img: PortfolioImage) => void;
@@ -46,6 +49,7 @@ interface AppState {
   setError: (msg: string | null) => void;
   setCurrentProject: (p: ProjectBrief | null) => void;
   setGeneratedOutput: (o: GeneratedOutput | null) => void;
+  setEditingBrief: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -218,6 +222,7 @@ export const useAppStore = create<AppState>()(
       error: null,
       currentProject: null,
       generatedOutput: null,
+      isEditingBrief: false,
 
       setStyleDNA: (dna) => set({ styleDNA: dna }),
       addImage: (img) => set((s) => ({ images: [...s.images, img] })),
@@ -227,6 +232,7 @@ export const useAppStore = create<AppState>()(
       setError: (msg) => set({ error: msg }),
       setCurrentProject: (p) => set({ currentProject: p }),
       setGeneratedOutput: (o) => set({ generatedOutput: o }),
+      setEditingBrief: (v) => set({ isEditingBrief: v }),
       reset: () =>
         set({
           styleDNA: null,
@@ -237,6 +243,7 @@ export const useAppStore = create<AppState>()(
           error: null,
           currentProject: null,
           generatedOutput: null,
+          isEditingBrief: false,
         }),
     }),
     {
