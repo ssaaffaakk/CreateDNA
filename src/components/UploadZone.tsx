@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { extractDominantColors } from "@/lib/palette";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -59,7 +60,7 @@ export default function UploadZone() {
         setProgress(`Extracting DNA from ${file.name}...`);
 
         try {
-          const base64 = await fileToBase64(file);
+          const { base64, palette } = await processImage(file);
           const thumbnail = await createThumbnail(file);
 
           const res = await fetch("/api/analyze", {
@@ -67,6 +68,9 @@ export default function UploadZone() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               imageBase64: base64,
+              // Real pixel-sampled colors — the model guesses hex codes, so we
+              // send the true palette and let the server use it instead.
+              sampledPalette: palette,
               // Read fresh: each file must merge into the DNA the previous
               // file produced, not the one captured when the batch started.
               existingDNA: useAppStore.getState().styleDNA,
@@ -296,7 +300,9 @@ export default function UploadZone() {
 // win in time-to-result.
 const MAX_ANALYSIS_EDGE = 1024;
 
-function fileToBase64(file: File): Promise<string> {
+function processImage(
+  file: File
+): Promise<{ base64: string; palette: { hex: string; weight: number }[] }> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -316,7 +322,18 @@ function fileToBase64(file: File): Promise<string> {
         return;
       }
       ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+      const base64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
+
+      // Sample the real colors from the same canvas. If getImageData throws
+      // (a tainted canvas), fall back to an empty palette and let the model's.
+      let palette: { hex: string; weight: number }[] = [];
+      try {
+        palette = extractDominantColors(ctx.getImageData(0, 0, w, h).data, 6);
+      } catch {
+        palette = [];
+      }
+
+      resolve({ base64, palette });
     };
 
     img.onerror = () => {
