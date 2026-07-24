@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { copyText } from "@/lib/clipboard";
 import { useState } from "react";
 
 const tagVariant = {
@@ -23,10 +24,12 @@ export default function StyleDNAPanel() {
         ? "Versatile"
         : "Eclectic";
 
-  const copyColor = (hex: string) => {
-    navigator.clipboard.writeText(hex);
-    setCopiedHex(hex);
-    setTimeout(() => setCopiedHex(null), 1500);
+  const copyColor = async (hex: string) => {
+    // Only claim "Copied!" when the copy actually landed.
+    if (await copyText(hex)) {
+      setCopiedHex(hex);
+      setTimeout(() => setCopiedHex(null), 1500);
+    }
   };
 
   return (

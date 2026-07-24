@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { copyText } from "@/lib/clipboard";
 
 export default function OutputPanel() {
   const { generatedOutput, styleDNA } = useAppStore();
@@ -12,16 +13,19 @@ export default function OutputPanel() {
 
   if (!generatedOutput) return null;
 
-  const copyToClipboard = (text: string, index: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
+  const copyToClipboard = async (text: string, index: number) => {
+    // Only claim "Copied!" when the copy actually landed.
+    if (await copyText(text)) {
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
   };
 
-  const copyHex = (hex: string) => {
-    navigator.clipboard.writeText(hex);
-    setCopiedHex(hex);
-    setTimeout(() => setCopiedHex(null), 1500);
+  const copyHex = async (hex: string) => {
+    if (await copyText(hex)) {
+      setCopiedHex(hex);
+      setTimeout(() => setCopiedHex(null), 1500);
+    }
   };
 
   const handleExport = async (
@@ -106,8 +110,10 @@ export default function OutputPanel() {
           <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
             Project palette
           </h3>
-          <div className="flex gap-2">
-            {generatedOutput.palette.map((hex) => (
+          <div className="flex gap-2 flex-wrap">
+            {/* Dedupe: swatches are keyed by hex and the model occasionally
+                repeats a colour. */}
+            {[...new Set(generatedOutput.palette)].map((hex) => (
               <motion.div
                 key={hex}
                 className="text-center cursor-pointer"
@@ -151,6 +157,26 @@ export default function OutputPanel() {
           </div>
         )}
       </motion.div>
+
+      {/* Moodboard — search-ready direction keywords the model generated
+          alongside the rest of the kit. */}
+      {generatedOutput.moodboard && generatedOutput.moodboard.length > 0 && (
+        <motion.div variants={fadeUp}>
+          <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-2">
+            Moodboard directions
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
+            {[...new Set(generatedOutput.moodboard)].map((m) => (
+              <span
+                key={m}
+                className="text-xs px-2.5 py-1 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* AI Prompts */}
       {generatedOutput.prompts && generatedOutput.prompts.length > 0 && (
