@@ -22,11 +22,11 @@ export default function Home() {
     // The globals.css reduced-motion rule only covers CSS animations; Framer
     // Motion runs in JS and needs to be told to honour the preference too.
     <MotionConfig reducedMotion="user">
-    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-200 dark:border-zinc-800">
+    <div className="min-h-screen app-bg text-zinc-900 dark:text-zinc-100">
+      <header className="sticky top-0 z-50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-xl border-b border-zinc-200/70 dark:border-zinc-800/70">
         <div className="max-w-3xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-sm shadow-sm">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[var(--color-accent-light)] via-[var(--color-accent)] to-[var(--color-accent-dark)] flex items-center justify-center text-white font-bold text-sm shadow-[var(--shadow-btn)]">
               D
             </div>
             <div>
@@ -73,9 +73,9 @@ export default function Home() {
         {!styleDNA && images.length === 0 && (
           <div className="space-y-6">
               <div className="text-center space-y-3">
-                <h2 className="text-[26px] sm:text-4xl font-bold tracking-tight leading-[1.15] text-balance">
+                <h2 className="text-[28px] sm:text-[2.75rem] font-bold tracking-[-0.02em] leading-[1.1] text-balance">
                   Your style,{" "}
-                  <span className="text-[var(--color-accent)]">
+                  <span className="text-gradient-accent">
                     readable by any AI
                   </span>
                 </h2>
@@ -96,9 +96,9 @@ export default function Home() {
                 ].map((s) => (
                   <li
                     key={s.n}
-                    className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 px-2 sm:px-3 py-2"
+                    className="flex-1 min-w-0 flex items-center gap-1.5 sm:gap-2.5 rounded-xl panel panel-interactive px-2 sm:px-3 py-2"
                   >
-                    <span className="shrink-0 w-5 h-5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[11px] font-medium text-zinc-500 flex items-center justify-center tabular-nums">
+                    <span className="shrink-0 w-5 h-5 rounded-md bg-orange-100/70 dark:bg-orange-950/40 text-[11px] font-semibold text-[var(--color-accent)] flex items-center justify-center tabular-nums">
                       {s.n}
                     </span>
                     <span className="min-w-0">
@@ -123,7 +123,7 @@ export default function Home() {
             palette bar is real MOCK_DNA data, the same shape a real analysis
             produces, so the page demonstrates itself instead of describing. */}
         {!styleDNA && images.length === 0 && (
-          <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <section className="rounded-2xl overflow-hidden panel panel-interactive">
               <div className="px-4 sm:px-5 py-3 flex items-center justify-between gap-3 border-b border-zinc-100 dark:border-zinc-800/70">
                 <p className="text-[11px] uppercase tracking-wider text-zinc-500">
                   Example profile
@@ -169,7 +169,7 @@ export default function Home() {
 
                 <button
                   onClick={loadDemo}
-                  className="w-full sm:w-auto text-sm font-medium px-4 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors active:scale-[0.99]"
+                  className="w-full sm:w-auto text-sm font-medium px-4 py-2.5 rounded-xl border border-zinc-300/80 dark:border-zinc-700 bg-white/70 dark:bg-zinc-900/50 shadow-[var(--shadow-card)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] hover:shadow-[var(--shadow-lift)] transition-all active:scale-[0.99]"
                 >
                   Open this example →
                 </button>

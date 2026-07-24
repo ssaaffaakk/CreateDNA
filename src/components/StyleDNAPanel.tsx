@@ -33,7 +33,7 @@ export default function StyleDNAPanel() {
     <motion.div
       // Same reasoning as OutputPanel: the profile itself never fades in.
       initial={false}
-      className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 dna-helix"
+      className="space-y-6 p-6 rounded-2xl panel"
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
@@ -122,7 +122,7 @@ export default function StyleDNAPanel() {
                 title={`${color.name} — click to copy`}
               >
                 <div
-                  className="w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm group-hover:shadow-md transition-shadow"
+                  className="w-12 h-12 rounded-xl swatch transition-shadow"
                   style={{ backgroundColor: color.hex }}
                 />
                 <span className="text-[10px] text-zinc-500 mt-1 block font-mono">

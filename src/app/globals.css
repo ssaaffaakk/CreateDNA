@@ -12,6 +12,114 @@
   --color-cool-light: #6fc0c6;
 }
 
+/* ------------------------------------------------------------------ *
+ * Refined-minimal design system
+ *
+ * Depth comes from soft layered shadows and subtle surface gradients,
+ * not from heavy fills. Dark mode is driven by prefers-color-scheme
+ * (there is no .dark class), so every dark override below is a media
+ * query — matching how Tailwind's dark: variant resolves here.
+ * ------------------------------------------------------------------ */
+:root {
+  --ring-subtle: rgba(9, 9, 11, 0.07);
+  --ring-strong: rgba(9, 9, 11, 0.13);
+  --shadow-card: 0 1px 2px rgba(9, 9, 11, 0.04), 0 10px 28px -14px rgba(9, 9, 11, 0.12);
+  --shadow-lift: 0 2px 6px rgba(9, 9, 11, 0.06), 0 22px 46px -18px rgba(9, 9, 11, 0.22);
+  --shadow-btn: 0 1px 2px rgba(194, 77, 10, 0.35), 0 8px 20px -8px rgba(232, 108, 37, 0.5);
+  --surface-top: rgba(255, 255, 255, 0.86);
+  --surface-bottom: rgba(250, 250, 251, 0.58);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ring-subtle: rgba(255, 255, 255, 0.08);
+    --ring-strong: rgba(255, 255, 255, 0.15);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 14px 34px -14px rgba(0, 0, 0, 0.7);
+    --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.6), 0 26px 52px -18px rgba(0, 0, 0, 0.8);
+    --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 24px -8px rgba(232, 108, 37, 0.4);
+    --surface-top: rgba(32, 32, 36, 0.72);
+    --surface-bottom: rgba(20, 20, 23, 0.5);
+  }
+}
+
+/* App canvas — a faint warm glow from the top edge instead of a flat fill. */
+.app-bg {
+  background:
+    radial-gradient(1100px 520px at 50% -8%, rgba(232, 108, 37, 0.07), transparent 62%),
+    #fcfcfd;
+}
+@media (prefers-color-scheme: dark) {
+  .app-bg {
+    background:
+      radial-gradient(1100px 520px at 50% -8%, rgba(232, 108, 37, 0.1), transparent 60%),
+      #09090b;
+  }
+}
+
+/* Elevated content card — shadow-defined, so it reads as a surface floating
+   over the canvas rather than a boxed panel. */
+.panel {
+  background-image: linear-gradient(180deg, var(--surface-top), var(--surface-bottom));
+  border: 1px solid var(--ring-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+/* Cards that respond to the pointer (steps, the example profile). */
+.panel-interactive {
+  transition: box-shadow 0.28s ease, border-color 0.28s ease, transform 0.28s ease;
+}
+.panel-interactive:hover {
+  box-shadow: var(--shadow-lift);
+  border-color: var(--ring-strong);
+  transform: translateY(-2px);
+}
+
+/* Primary action — warm accent gradient with a coloured shadow. */
+.btn-accent {
+  background-image: linear-gradient(
+    135deg,
+    var(--color-accent-light),
+    var(--color-accent) 55%,
+    var(--color-accent-dark)
+  );
+  box-shadow: var(--shadow-btn);
+  transition: filter 0.2s ease, transform 0.1s ease;
+}
+.btn-accent:hover:not(:disabled) {
+  filter: brightness(1.06) saturate(1.04);
+}
+.btn-accent:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Colour swatch — an inner highlight ring plus a soft drop reads as a chip
+   of pigment rather than a flat rectangle. */
+.swatch {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 2px 6px rgba(9, 9, 11, 0.13);
+}
+@media (prefers-color-scheme: dark) {
+  .swatch {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+      0 3px 8px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Hero accent — a warm gradient sweep across the highlighted phrase. */
+.text-gradient-accent {
+  background-image: linear-gradient(
+    120deg,
+    var(--color-accent-dark),
+    var(--color-accent) 48%,
+    var(--color-accent-light)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 @keyframes pulse-ring {
   0% { transform: scale(0.8); opacity: 0.5; }
   50% { transform: scale(1); opacity: 0.2; }

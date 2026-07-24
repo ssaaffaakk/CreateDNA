@@ -79,7 +79,7 @@ export default function OutputPanel() {
       initial={false}
       animate="show"
       variants={stagger}
-      className="space-y-6 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
+      className="space-y-6 p-6 rounded-2xl panel"
     >
       <motion.div variants={fadeUp}>
         <h2 className="text-xl font-semibold tracking-tight">
@@ -119,7 +119,7 @@ export default function OutputPanel() {
                 onClick={() => copyHex(hex)}
               >
                 <div
-                  className="w-14 h-14 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow"
+                  className="w-14 h-14 rounded-xl swatch transition-shadow"
                   style={{ backgroundColor: hex }}
                 />
                 <span className="text-[10px] text-zinc-500 mt-1 block font-mono">
@@ -205,7 +205,7 @@ export default function OutputPanel() {
               key={key}
               onClick={() => handleExport(key)}
               disabled={exporting !== null}
-              className="flex-1 py-2.5 px-3 text-sm rounded-xl border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all disabled:opacity-50 active:scale-[0.98]"
+              className="flex-1 py-2.5 px-3 text-sm rounded-xl border border-zinc-300/80 dark:border-zinc-700 bg-white/60 dark:bg-zinc-900/40 shadow-[var(--shadow-card)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] hover:shadow-[var(--shadow-lift)] transition-all disabled:opacity-50 active:scale-[0.98]"
             >
               {exporting === key ? "..." : label}
             </button>

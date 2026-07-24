@@ -137,8 +137,8 @@ export default function UploadZone() {
         }}
         className={`relative border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center transition-all cursor-pointer group ${
           dragOver
-            ? "border-[var(--color-accent)] bg-orange-50 dark:bg-orange-950/20 scale-[1.01]"
-            : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
+            ? "border-[var(--color-accent)] bg-orange-50 dark:bg-orange-950/20 scale-[1.01] shadow-[var(--shadow-lift)]"
+            : "border-zinc-300 dark:border-zinc-700 bg-white/50 dark:bg-zinc-900/30 shadow-[var(--shadow-card)] hover:border-[var(--color-accent)]/50 hover:shadow-[var(--shadow-lift)]"
         }`}
         onClick={openFilePicker}
         onKeyDown={(e) => {
@@ -178,7 +178,7 @@ export default function UploadZone() {
               exit={{ opacity: 0 }}
               className="space-y-3 py-2"
             >
-              <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center group-hover:bg-orange-50 dark:group-hover:bg-orange-950/30 transition-colors">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl bg-zinc-100 dark:bg-zinc-800 shadow-sm flex items-center justify-center group-hover:bg-orange-100/70 dark:group-hover:bg-orange-950/30 group-hover:scale-105 transition-all">
                 <svg
                   className="w-6 h-6 sm:w-7 sm:h-7 text-zinc-400 group-hover:text-[var(--color-accent)] transition-colors"
                   fill="none"

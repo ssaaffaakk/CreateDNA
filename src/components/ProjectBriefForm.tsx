@@ -53,7 +53,7 @@ export default function ProjectBriefForm() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800"
+      className="space-y-5 p-6 rounded-2xl panel"
     >
       <div>
         <h2 className="text-xl font-semibold tracking-tight">New project</h2>
@@ -145,7 +145,7 @@ export default function ProjectBriefForm() {
       <button
         onClick={handleGenerate}
         disabled={loading || !brief.description.trim()}
-        className="w-full py-3 px-4 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-dark)] disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+        className="w-full py-3 px-4 rounded-xl btn-accent disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none text-white font-medium flex items-center justify-center gap-2"
       >
         {loading ? (
           <>
