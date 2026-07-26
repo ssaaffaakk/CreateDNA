@@ -155,7 +155,8 @@ export async function analyzeImage(
 
 export async function generateText(
   systemPrompt: string,
-  userPrompt: string
+  userPrompt: string,
+  temperature = 0.7
 ): Promise<string> {
   return chatCompletion(
     TEXT_MODEL,
@@ -164,6 +165,6 @@ export async function generateText(
       { role: "user", content: userPrompt },
     ],
     2000,
-    0.7
+    temperature
   );
 }

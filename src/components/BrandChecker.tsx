@@ -58,33 +58,71 @@ function scoreColor(score: number): string {
   return "#ef4444";
 }
 
+// Used when watsonx is unavailable (keyless demo) or the call fails.
+function templateNote(res: OnBrandResult): string {
+  if (res.score >= 80) return "Right in your lane — this reads unmistakably like your work.";
+  if (res.reasons.length) {
+    const [a, b] = res.reasons;
+    return `It drifts off brand — ${a}${b ? ` and ${b}` : ""}. Pull it back toward your signature to stay on brand.`;
+  }
+  return "Broadly aligned with your style, with only minor drift.";
+}
+
 export default function BrandChecker() {
   const { styleDNA } = useAppStore();
   const [result, setResult] = useState<{ res: OnBrandResult; thumb: string; name: string } | null>(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [noteLoading, setNoteLoading] = useState(false);
 
-  const check = useCallback(
-    async (file: File) => {
-      const dna = useAppStore.getState().styleDNA;
-      if (!dna?.features) return;
-      if (!ACCEPTED.includes(file.type)) {
-        setError("Use a JPG, PNG, WebP or GIF.");
-        return;
-      }
-      setChecking(true);
-      setError(null);
-      try {
-        const { sig, thumb } = await readImage(file);
-        setResult({ res: onBrandScore(dna.features, sig), thumb, name: file.name });
-      } catch {
-        setError("Couldn't read that image.");
-      }
+  const check = useCallback(async (file: File) => {
+    const dna = useAppStore.getState().styleDNA;
+    if (!dna?.features) return;
+    if (!ACCEPTED.includes(file.type)) {
+      setError("Use a JPG, PNG, WebP or GIF.");
+      return;
+    }
+    setChecking(true);
+    setError(null);
+    setNote(null);
+
+    let data: { sig: FeatureSignature; thumb: string };
+    try {
+      data = await readImage(file);
+    } catch {
+      setError("Couldn't read that image.");
       setChecking(false);
-    },
-    []
-  );
+      return;
+    }
+    // Deterministic score shows instantly and never changes for the same image.
+    const res = onBrandScore(dna.features, data.sig);
+    setResult({ res, thumb: data.thumb, name: file.name });
+    setChecking(false);
+
+    // IBM Granite phrases the human note, grounded in the measured result.
+    // Falls back to a templated note when keys are absent (demo / keyless).
+    setNoteLoading(true);
+    try {
+      const r = await fetch("/api/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          score: res.score,
+          verdict: verdict(res.score),
+          reasons: res.reasons,
+          matches: res.matches,
+          dnaSummary: dna.summary,
+        }),
+      });
+      const d = await r.json().catch(() => null);
+      setNote(r.ok && d?.note ? (d.note as string) : templateNote(res));
+    } catch {
+      setNote(templateNote(res));
+    }
+    setNoteLoading(false);
+  }, []);
 
   const pick = useCallback(() => {
     const input = document.createElement("input");
@@ -172,8 +210,29 @@ export default function BrandChecker() {
             </p>
           )}
 
+          {(noteLoading || note) && (
+            <div className="rounded-xl bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 p-3">
+              <h3 className="text-xs uppercase tracking-wider text-zinc-500 mb-1.5">
+                Creative director&apos;s note
+                <span className="ml-1.5 text-[9px] text-zinc-400 normal-case tracking-normal">
+                  · IBM Granite
+                </span>
+              </h3>
+              {note ? (
+                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                  {note}
+                </p>
+              ) : (
+                <p className="text-sm text-zinc-400 italic">Writing…</p>
+              )}
+            </div>
+          )}
+
           <button
-            onClick={() => setResult(null)}
+            onClick={() => {
+              setResult(null);
+              setNote(null);
+            }}
             className="text-sm font-medium px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors active:scale-[0.98]"
           >
             Check another
