@@ -48,6 +48,18 @@ export const MOCK_DNA: StyleDNA = {
   ],
   summary:
     "A refined visual identity blending Swiss modernist precision with Japanese minimalist restraint. Strong use of negative space, asymmetric compositions, and a controlled palette dominated by deep navy and coral red. Typography is tight and purposeful. The work communicates sophistication through restraint — every element earns its place.",
+  // Brand signature for the On-Brand Checker: cool-leaning, controlled saturation,
+  // darker + high contrast, minimal detail, lots of negative space, flat.
+  features: {
+    warmFrac: 0.42,
+    meanChroma: 0.34,
+    meanLuminance: 0.38,
+    contrast: 0.42,
+    edgeDensity: 0.05,
+    negativeSpace: 0.62,
+    symLR: 0.72,
+    flatness: 0.78,
+  },
 };
 
 export const MOCK_OUTPUT: GeneratedOutput = {

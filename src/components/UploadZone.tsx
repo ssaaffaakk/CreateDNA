@@ -4,6 +4,8 @@ import { useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { extractDominantColors } from "@/lib/palette";
+import { computeImageFeatures } from "@/lib/analysis/image-features";
+import { toSignature, type FeatureSignature } from "@/lib/analysis/on-brand";
 import { DEMO_DNA_ID } from "@/lib/mock-data";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -67,7 +69,7 @@ export default function UploadZone() {
         setProgress(`Extracting DNA from ${file.name}...`);
 
         try {
-          const { base64, palette } = await processImage(file);
+          const { base64, palette, features } = await processImage(file);
           const thumbnail = await createThumbnail(file);
 
           // Read fresh each file: merge into the DNA the previous file produced.
@@ -111,6 +113,7 @@ export default function UploadZone() {
               thumbnail,
               analyzedAt: new Date().toISOString(),
               analysis: data.analysis,
+              features,
             });
           }
         } catch (err) {
@@ -327,9 +330,11 @@ export default function UploadZone() {
 // win in time-to-result.
 const MAX_ANALYSIS_EDGE = 1024;
 
-function processImage(
-  file: File
-): Promise<{ base64: string; palette: { hex: string; weight: number }[] }> {
+function processImage(file: File): Promise<{
+  base64: string;
+  palette: { hex: string; weight: number }[];
+  features?: FeatureSignature;
+}> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -351,16 +356,19 @@ function processImage(
       ctx.drawImage(img, 0, 0, w, h);
       const base64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1];
 
-      // Sample the real colors from the same canvas. If getImageData throws
-      // (a tainted canvas), fall back to an empty palette and let the model's.
+      // Sample the real colours + deterministic feature signature from the same
+      // pre-JPEG canvas. If getImageData throws (a tainted canvas), fall back.
       let palette: { hex: string; weight: number }[] = [];
+      let features: FeatureSignature | undefined;
       try {
-        palette = extractDominantColors(ctx.getImageData(0, 0, w, h).data, 6);
+        const data = ctx.getImageData(0, 0, w, h).data;
+        palette = extractDominantColors(data, 6);
+        features = toSignature(computeImageFeatures(data, w, h, img.width / img.height));
       } catch {
         palette = [];
       }
 
-      resolve({ base64, palette });
+      resolve({ base64, palette, features });
     };
 
     img.onerror = () => {

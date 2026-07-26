@@ -13,21 +13,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CreateDNA — AI That Knows Your Style",
+  title: "CreateDNA — Stay on brand, on every AI",
   description:
-    "Upload your portfolio. AI learns your creative identity — palette, style, mood, techniques — and generates project kits that sound like you. Built with IBM Granite on watsonx.ai.",
+    "AI blurs everyone into the same look. CreateDNA reads your visual identity from your real work and turns it into a portable palette and system prompt — so every AI tool, from Midjourney to ChatGPT, stays on brand. Built with IBM Granite on watsonx.ai.",
   keywords: [
-    "creative AI",
-    "style analysis",
+    "brand consistency",
+    "AI brand guardrail",
+    "creative identity",
     "IBM Granite",
-    "portfolio",
+    "watsonx",
     "creative DNA",
     "AI Builders Challenge",
   ],
   openGraph: {
-    title: "CreateDNA — AI That Knows Your Style",
+    title: "CreateDNA — Stay on brand, on every AI",
     description:
-      "Upload your portfolio. AI extracts your creative DNA and generates project kits in your style.",
+      "Turn your visual identity into a portable palette and system prompt that keeps every AI tool on brand.",
     type: "website",
   },
 };

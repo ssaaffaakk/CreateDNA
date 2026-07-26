@@ -1,3 +1,5 @@
+import type { FeatureSignature } from "./analysis/on-brand";
+
 export interface StyleDNA {
   id: string;
   createdAt: string;
@@ -11,6 +13,9 @@ export interface StyleDNA {
   influences: string[];
   summary: string;
   consistencyScore: number;
+  // Deterministic brand signature (mean of the uploaded pieces' pixel features),
+  // used by the On-Brand Checker. Optional: absent on pre-feature profiles.
+  features?: FeatureSignature;
 }
 
 export interface ColorEntry {

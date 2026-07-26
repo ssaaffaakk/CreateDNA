@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { calculateConsistency, mergeStyleDNA } from "./style-dna";
 import type { ColorEntry, StyleAnalysis, StyleDNA, StyleWeight } from "./style-dna";
+import { averageSignatures } from "./analysis/on-brand";
+import type { FeatureSignature } from "./analysis/on-brand";
 
 export interface PortfolioImage {
   id: string;
@@ -11,6 +13,31 @@ export interface PortfolioImage {
   // The raw per-image analysis, so removing an image can re-derive the DNA
   // from what remains instead of leaving a stale, over-counted profile.
   analysis?: StyleAnalysis;
+  // The image's deterministic pixel signature; averaged into the DNA's brand
+  // signature for the On-Brand Checker.
+  features?: FeatureSignature;
+}
+
+const SIGNATURE_KEYS: (keyof FeatureSignature)[] = [
+  "warmFrac", "meanChroma", "meanLuminance", "contrast",
+  "edgeDensity", "negativeSpace", "symLR", "flatness",
+];
+
+function isSignature(v: unknown): v is FeatureSignature {
+  return (
+    typeof v === "object" &&
+    v !== null &&
+    SIGNATURE_KEYS.every((k) => {
+      const n = (v as Record<string, unknown>)[k];
+      return typeof n === "number" && Number.isFinite(n);
+    })
+  );
+}
+
+// The DNA's brand signature = mean of the pieces' signatures. Pure + reproducible.
+function aggregateSignature(images: PortfolioImage[]): FeatureSignature | undefined {
+  const sigs = images.map((i) => i.features).filter(isSignature);
+  return averageSignatures(sigs) ?? undefined;
 }
 
 export interface ProjectBrief {
@@ -152,6 +179,7 @@ function sanitizeStyleDNA(value: unknown): StyleDNA | null {
       value.consistencyScore <= 100
         ? value.consistencyScore
         : calculateConsistency(cleanStyles),
+    features: isSignature(value.features) ? value.features : undefined,
   };
 }
 
@@ -228,23 +256,34 @@ export const useAppStore = create<AppState>()(
       isEditingBrief: false,
 
       setStyleDNA: (dna) => set({ styleDNA: dna }),
-      addImage: (img) => set((s) => ({ images: [...s.images, img] })),
+      addImage: (img) =>
+        set((s) => {
+          const images = [...s.images, img];
+          // Keep the DNA's brand signature in sync with the pieces.
+          const styleDNA = s.styleDNA
+            ? { ...s.styleDNA, features: aggregateSignature(images) }
+            : s.styleDNA;
+          return { images, styleDNA };
+        }),
       removeImage: (id) =>
         set((s) => {
           const images = s.images.filter((i) => i.id !== id);
+          const features = aggregateSignature(images);
           // Re-derive the DNA from the pieces that remain — but only when every
           // remaining image carries its analysis (older persisted images may
           // predate this field). Otherwise leave the DNA untouched rather than
           // silently dropping contributions we can no longer reconstruct.
           const analyzed = images.filter((i) => i.analysis);
           if (images.length === analyzed.length) {
-            const styleDNA = analyzed.reduce<StyleDNA | null>(
+            const derived = analyzed.reduce<StyleDNA | null>(
               (dna, img) => mergeStyleDNA(dna, img.analysis as StyleAnalysis),
               null
             );
+            const styleDNA = derived ? { ...derived, features } : null;
             return { images, styleDNA };
           }
-          return { images };
+          const styleDNA = s.styleDNA ? { ...s.styleDNA, features } : s.styleDNA;
+          return { images, styleDNA };
         }),
       setAnalyzing: (v) => set({ isAnalyzing: v }),
       setError: (msg) => set({ error: msg }),

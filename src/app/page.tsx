@@ -3,6 +3,7 @@
 import { MotionConfig } from "framer-motion";
 import UploadZone from "@/components/UploadZone";
 import StyleDNAPanel from "@/components/StyleDNAPanel";
+import BrandChecker from "@/components/BrandChecker";
 import ProjectBriefForm from "@/components/ProjectBriefForm";
 import OutputPanel from "@/components/OutputPanel";
 import { useState } from "react";
@@ -119,15 +120,25 @@ export default function Home() {
           <div className="space-y-6">
               <div className="text-center space-y-3">
                 <h2 className="text-[26px] sm:text-4xl font-bold tracking-tight leading-[1.15] text-balance">
-                  Your style,{" "}
-                  <span className="text-[var(--color-accent)]">
-                    readable by any AI
+                  Your{" "}
+                  <span
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(90deg, var(--color-accent), #e94560, var(--color-cool))",
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    DNA
                   </span>
+                  , on every AI
                 </h2>
                 <p className="text-sm sm:text-base text-zinc-500 max-w-lg mx-auto leading-relaxed text-pretty">
-                  Drop in your work. We read the palette, composition and
-                  technique behind it — then write the prompts that reproduce
-                  it anywhere.
+                  AI blurs everyone into the same look. Upload your work and
+                  CreateDNA turns your visual identity into a portable palette
+                  and system prompt — so Midjourney, ChatGPT and Canva all stay
+                  on brand.
                 </p>
               </div>
 
@@ -237,6 +248,10 @@ export default function Home() {
         )}
 
         <StyleDNAPanel />
+
+        {/* On-Brand Checker: score any image against the DNA signature. Renders
+            only once a signature exists (self-guards on styleDNA.features). */}
+        <BrandChecker />
 
         {/* Plain conditional render (like the landing hero), NOT AnimatePresence
             mode="wait": gating the output panel on the brief form's EXIT
