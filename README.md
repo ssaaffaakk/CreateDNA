@@ -1,13 +1,45 @@
+<div align="center">
+
+<img src="docs/hero.png" alt="CreateDNA — Your style, on every AI" width="100%">
+
 # CreateDNA
 
-> **AI that knows your style.** Upload your portfolio → watsonx.ai learns your Creative DNA → IBM Granite generates every new project pre-loaded with your aesthetic — and scores new work against it.
+### **AI that knows your style.**
 
-Built for the **IBM AI Builders Challenge 2026** · July theme: *Reimagine Creative Industries with AI*.
+Upload your portfolio → watsonx.ai learns your **Creative DNA** → IBM Granite generates every new project pre-loaded with your aesthetic — and scores new work against it.
+
+<br>
+
+[![IBM AI Builders Challenge 2026](https://img.shields.io/badge/IBM%20AI%20Builders%20Challenge-2026-0f62fe?style=for-the-badge&logo=ibm&logoColor=white)](https://www.ibm.com/products/watsonx-ai)
+[![Built with IBM Granite](https://img.shields.io/badge/IBM%20Granite-4%20H%20Small-054ada?style=for-the-badge&logo=ibm&logoColor=white)](https://www.ibm.com/granite)
+[![watsonx.ai](https://img.shields.io/badge/watsonx.ai-vision%20%2B%20text-0043ce?style=for-the-badge&logo=ibm&logoColor=white)](https://www.ibm.com/products/watsonx-ai)
+
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-v4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white)
+![Zustand](https://img.shields.io/badge/Zustand-5-443e38?style=flat-square)
+![Vitest](https://img.shields.io/badge/Vitest-35%20tests%20passing-6da55f?style=flat-square&logo=vitest&logoColor=white)
+![License MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
+
+</div>
+
+---
+
+> ### 🏆 Built for the IBM AI Builders Challenge 2026
+>
+> **July theme — *Reimagine Creative Industries with AI*.**
+> CreateDNA was designed, built and shipped for this challenge: a personalized creative
+> assistant powered by **IBM Granite** and **watsonx.ai** vision, wrapped around a
+> deterministic, tested core. Development was done primarily with **IBM Bob**, IBM's
+> AI development assistant — see [How IBM Bob Was Used](#how-ibm-bob-was-used).
+>
+> No API keys? Hit **See a demo** in the app — judges get the full experience instantly.
 
 ---
 
 ## Table of Contents
 
+- [Screenshots](#screenshots)
 - [The Problem](#the-problem)
 - [The Solution](#the-solution)
 - [Key Features](#key-features)
@@ -27,6 +59,29 @@ Built for the **IBM AI Builders Challenge 2026** · July theme: *Reimagine Creat
 
 ---
 
+## Screenshots
+
+### 1 · Landing — upload 2–5 pieces of your work
+
+<img src="docs/screenshots/01-landing.jpg" alt="CreateDNA landing page with upload zone" width="100%">
+
+### 2 · Your Creative DNA — pixel-true palette, measured style profile, one-click export
+
+<img src="docs/screenshots/02-creative-dna.jpg" alt="Creative DNA panel showing palette, style weights, mood, techniques and export buttons" width="100%">
+
+### 3 · On-Brand Checker — a reproducible 0–100 score, plus a Granite director's note
+
+<img src="docs/screenshots/03-on-brand-checker.jpg" alt="On-Brand Checker scoring an image 71 out of 100 with a creative director's note written by IBM Granite" width="100%">
+
+> The score, the *"off because"* reasons and the *"on point"* list are **computed from pixels** —
+> IBM Granite only writes the note, and is forbidden from contradicting the measured signals.
+
+### 4 · Project kit — palette, typography, tone and ready-to-paste prompts for every AI tool
+
+<img src="docs/screenshots/04-project-kit.jpg" alt="Generated project kit with brief, palette, typography, tone of voice, moodboard and prompts for Midjourney, DALL-E, ChatGPT and Canva" width="100%">
+
+---
+
 ## The Problem
 
 Creative professionals face a fragmented AI landscape:
@@ -42,12 +97,14 @@ Your creative identity shouldn't reset every time you switch tools.
 
 CreateDNA extracts your visual identity from your portfolio, makes it **portable** across every AI tool, and lets you **measure** new work against it:
 
-1. **Upload** your portfolio images (designs, posters, logos, photos)
-2. **Analyze** — a deterministic reading engine measures palette, composition, mood, technique, and style movement directly from pixels; watsonx.ai vision adds semantic interpretation
-3. **Accumulate** — each upload merges into a growing DNA profile. The more you upload, the sharper it knows you
-4. **Generate project kits** — enter a brief, and IBM Granite returns palette, typography, tone, and ready-to-paste prompts for Midjourney, DALL·E, ChatGPT, and Canva — all in *your* style
-5. **Check on-brand** — drop in any new image and get a reproducible 0–100 on-brand score plus a grounded creative-director's note from IBM Granite
-6. **Export anywhere** — download your Creative DNA as JSON, Markdown, or a portable system prompt. One paste and any AI knows your style
+| | Step | What happens |
+|:--:|---|---|
+| **1** | **Upload** | Drop your portfolio images — designs, posters, logos, photos |
+| **2** | **Analyze** | A deterministic reading engine measures palette, composition, mood, technique and style movement directly from pixels; watsonx.ai vision adds semantic interpretation |
+| **3** | **Accumulate** | Each upload merges into a growing DNA profile. The more you upload, the sharper it knows you |
+| **4** | **Generate** | Enter a brief → IBM Granite returns palette, typography, tone and ready-to-paste prompts for Midjourney, DALL·E, ChatGPT and Canva — all in *your* style |
+| **5** | **Check** | Drop in any new image and get a reproducible 0–100 on-brand score plus a grounded creative-director's note from IBM Granite |
+| **6** | **Export** | Download your Creative DNA as JSON, Markdown or a portable system prompt. One paste and any AI knows your style |
 
 ## Key Features
 
@@ -259,3 +316,10 @@ CreateDNA is a submission for the **IBM AI Builders Challenge 2026**, July theme
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+<div align="center">
+<br>
+
+**Built with IBM Granite on watsonx.ai · IBM AI Builders Challenge 2026**
+
+</div>
