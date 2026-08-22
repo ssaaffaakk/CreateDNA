@@ -222,6 +222,20 @@ npm test           # run the Vitest suite
 npm run lint       # eslint
 ```
 
+### 4. Deploy to Render
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ssaaffaakk/CreateDNA)
+
+The repo ships a [`render.yaml`](render.yaml) blueprint — one web service running `next start`:
+
+1. Click the button above (or **New → Blueprint** in the Render dashboard and pick this repo).
+2. When prompted, paste your three watsonx.ai values: `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, `WATSONX_URL`. They are marked `sync: false`, so they live only in the Render dashboard — never in the repo.
+3. Deploy. The build runs `npm ci && npm run build`; health checks hit `/`.
+
+No keys yet? Deploy anyway — the landing page's **See a demo** example profile works without credentials; only live image analysis and kit generation need real keys.
+
+> The blueprint uses the **free** plan, which spins down after ~15 minutes of inactivity (first request then takes ~50 s to cold-start). For judging day, bump `plan: free` to `plan: starter` for an always-on instance.
+
 ## API Reference
 
 | Route | Method | Description |

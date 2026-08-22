@@ -1,0 +1,20 @@
+services:
+  - name: createdna
+    type: web
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # watsonx.ai credentials — set the values in the Render dashboard.
+      # Without them the app still runs: the landing demo profile works,
+      # only live analysis/generation needs real keys.
+      - key: WATSONX_API_KEY
+        sync: false
+      - key: WATSONX_PROJECT_ID
+        sync: false
+      - key: WATSONX_URL
+        sync: false
