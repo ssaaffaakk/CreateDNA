@@ -230,7 +230,7 @@ The repo ships a [`render.yaml`](render.yaml) blueprint — one web service runn
 
 1. Click the button above (or **New → Blueprint** in the Render dashboard and pick this repo).
 2. When prompted, paste your three watsonx.ai values: `WATSONX_API_KEY`, `WATSONX_PROJECT_ID`, `WATSONX_URL`. They are marked `sync: false`, so they live only in the Render dashboard — never in the repo.
-3. Deploy. The build runs `npm ci && npm run build`; health checks hit `/`.
+3. Deploy. The build runs `npm ci --include=dev && npm run build`; health checks hit `/`. (The repo pins `include=dev` in [`.npmrc`](.npmrc) because hosts that set `NODE_ENV=production` otherwise skip the build-time dependencies.)
 
 No keys yet? Deploy anyway — the landing page's **See a demo** example profile works without credentials; only live image analysis and kit generation need real keys.
 
