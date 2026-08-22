@@ -3,7 +3,9 @@ services:
     type: web
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build
+    # --include=dev: NODE_ENV=production makes npm ci skip devDependencies,
+    # but the build itself needs them (Tailwind PostCSS, TypeScript).
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start
     healthCheckPath: /
     envVars:
